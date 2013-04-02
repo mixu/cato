@@ -1,0 +1,23 @@
+{
+  "name": "vjs2",
+  "version": "0.0.0",
+  "description": "- value binding - model binding - collection",
+  "main": "sample.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@bitbucket.org:mixu/vjs2"
+  },
+  "author": "",
+  "license": "BSD",
+  "readmeFilename": "readme.md",
+  "gitHead": "a1b30f10ab7864fa2a9aadf7c4a3b964eb2f1a6e",
+  "dependencies": {
+    "microee": "0.0.2"
+  }
+}

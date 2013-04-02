@@ -39,3 +39,9 @@ CollectionView methods:
 - .bind(model) (~ e.g. analoguous to writable.write())
 - .render(): simply renders the container, contents added incrementally (could be collection-aware for less DOM thrashing in the long term)
 
+## View lifecycle
+
+    [ Before render: has an object, but no id's or DOM events ]
+    [ Rendered (to buffer): has id's, but no DOM event bindings ]
+    [ Attached to DOM: has id's and DOM events are bound ]
+    [ Destroyed ]
