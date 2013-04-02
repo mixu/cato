@@ -45,3 +45,14 @@ CollectionView methods:
     [ Rendered (to buffer): has id's, but no DOM event bindings ]
     [ Attached to DOM: has id's and DOM events are bound ]
     [ Destroyed ]
+
+## Server
+
+Involved in the bootstrap phase (and possibly as an API endpoint).
+
+- Resolve the URL to the submodule responsible for it.
+- Package the core:
+  - framework (and other libraries)
+  - stylesheets
+  - core model definitions
+- Send state (or simple call to init() with the current URL)
