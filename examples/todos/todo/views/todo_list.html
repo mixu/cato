@@ -1,0 +1,16 @@
+<section class="main">
+  <input type="checkbox" class="toggle-all" onclick="#toggleAllComplete" />
+  <label for="toggle-all">Mark all as complete</label>
+  <ul {{CollectionView}}>
+    <li>
+      <div class="view" ondblclick="#edit">
+        <input type="checkbox" class="toggle" bind-attr-checked="@done" onclick="#toggleDone" />
+        <label>{{@title}}</label>
+        <a class="destroy" onclick="#clear" />
+      </div>
+      <input type="text" class="edit" bind-attr-value="@title"
+        onkeypress="#updateOnEnter"
+        onblur="#close" />
+    </li>
+  </ul>
+</section>

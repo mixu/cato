@@ -1,0 +1,22 @@
+<div>
+  <div id="todoapp">
+    <header>
+      <h1>Todos</h1>
+      <input type="text" placeholder="What needs to be done?" onkeypress="#createOnEnter" />
+    </header>
+
+  {{bind @View as TodoList}}
+  {{bind @View as Footer}}
+
+  </div>
+  <div id="instructions">
+    Double-click to edit a todo.
+  </div>
+
+  <div id="credits">
+    Created by
+    <br />
+    <a href="http://jgn.me/">J&amp;eacute;r&amp;ocirc;me Gravel-Niquet</a>.
+    <br />Rewritten by: Mikito Takada.
+  </div>
+</div>

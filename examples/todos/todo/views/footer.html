@@ -1,0 +1,17 @@
+<footer name="Footer" template="conditional" listeners="??">
+  <switch>
+    <case expr="Todos.done().length > 0">
+      <a name="clearCompleted" id="clear-completed" onclick="#clearCompleted">
+        Clear {{.count}} completed {{.items}}
+      </a>
+      <div name="todoCount" id="todo-count">
+        <b>{{.count}}</b> {{.items}} left
+      </div>
+    </case>
+    <default>
+      <div name="todoCount2" id="todo-count">
+        <b>{{.count}}</b> {{.items}} left
+      </div>
+    </default>
+  </switch>
+</footer>
