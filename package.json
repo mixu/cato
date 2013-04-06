@@ -19,6 +19,7 @@
   "gitHead": "a1b30f10ab7864fa2a9aadf7c4a3b964eb2f1a6e",
   "dependencies": {
     "microee": "0.0.2",
-    "gluejs": "~0.2.0"
+    "gluejs": "~0.2.0",
+    "htmlparser": "~1.7.6"
   }
 }
