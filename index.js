@@ -1,40 +1,15 @@
-function html(el, depth) {
-  function whitespace(size) {
-    return new Array(size + 1 ).join(' ');
-  }
-  if(arguments.length == 1) {
-    depth = 0;
-  }
-  if(typeof el === 'string') {
-    if(/^\s+$/.test(el)) return '';
-    return el;
-  }
-  var result = '<'+el.tag;
+var util = require('util'),
+    toHTML = require('htmlparser-to-html');
 
-  if(el.attr) {
-    result += ' '+Object.keys(el.attr).map(function(key){
-                return key + '="'+el.attr[key]+'"';
-              }).join(' ');
+function html(el) {
+  var input = el;
+  if(el.render) {
+    input = el.render();
   }
-  if(el.content) {
-    result += '>\n';
-    if(Array.isArray(el.content)) {
-      result += el.content.map(function(i) {
-        return whitespace(depth+2)+html(i, depth + 2);
-      }).join('\n')+'\n';
-    } else {
-      if(typeof el.content === 'string' || typeof el.content === 'number') {
-        result += whitespace(depth+2) + el.content + '\n';
-      } else {
-        result += whitespace(depth+2) + html(el.content, depth + 2)+'\n';
-      }
-    }
-    result += whitespace(depth) + '</'+el.tag+'>';
-  } else {
-    result += ' />\n';
-  }
-
-  return result;
+  console.log('input', util.inspect(input, false, 10, true));
+  var output = toHTML(input);
+  console.log('output', output);
+  return output;
 }
 
 module.exports = {
