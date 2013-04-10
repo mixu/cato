@@ -21,6 +21,6 @@
     "microee": "0.0.2",
     "gluejs": "~0.2.0",
     "htmlparser": "~1.7.6",
-    "htmlparser-to-html": "0.0.0"
+    "htmlparser-to-html": "0.0.1"
   }
 }
