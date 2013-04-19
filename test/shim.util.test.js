@@ -49,6 +49,7 @@ module.exports['shim util tests'] = {
                     console.log('2nd:', item);
                     return item;
                  })
+                 // one way to write this
                  .reduce(function reducer(item, applicator){
                     if(Array.isArray(item)) {
                       return item.reduce(function(prev, subitem) {
@@ -57,10 +58,24 @@ module.exports['shim util tests'] = {
                     }
                     item = applicator(item);
                     if(item.children) {
-                      return reducer(item.children, applicator);
+                      return item.value + reducer(item.children, applicator);
                     }
                     return item.value;
                  })
+                 // another way to write this
+                 /*
+                 .reduce(function reducer(item, applicator){
+                    if(item.children) {
+                      if(Array.isArray(item.children)) {
+                        return item.children.reduce(function(prev, child) {
+                            return prev + reducer(child, applicator);
+                          }, applicator(item).value);
+                      }
+                      return reducer(item.children, applicator) + applicator(item).value;
+                    }
+                    return applicator(item).value;
+                 })
+                */
                 );
 
     // preorder traversal is quite annoying to write reducers for
