@@ -29,64 +29,74 @@ module.exports['shim util tests'] = {
 */
 
   'multiply-sum example': function() {
-    var Walker = new ShimUtil.Walk(
-      {
-        value: 1,
-        children: [
-          {value: 2, children: [ {value: 4}, {value: 8}]},
-          {value: 3, children: [ {value: 3, children: { value: 5 }}]}
-        ]
-      });
 
-    console.log(Walker.map(
-                  function(item) {
-                    console.log('1st:', item);
-                    item.value = item.value * 2;
-                    return item;
-                 })
-                 .map(
-                  function(item) {
-                    console.log('2nd:', item);
-                    return item;
-                 })
-                 // one way to write this
-                 .reduce(function reducer(item, applicator){
-                    if(Array.isArray(item)) {
-                      return item.reduce(function(prev, subitem) {
-                        return prev + reducer(subitem, applicator);
-                      }, 0);
-                    }
-                    item = applicator(item);
-                    if(item.children) {
-                      return item.value + reducer(item.children, applicator);
-                    }
-                    return item.value;
-                 })
-                 // another way to write this
-                 /*
-                 .reduce(function reducer(item, applicator){
-                    if(item.children) {
-                      if(Array.isArray(item.children)) {
-                        return item.children.reduce(function(prev, child) {
-                            return prev + reducer(child, applicator);
-                          }, applicator(item).value);
-                      }
-                      return reducer(item.children, applicator) + applicator(item).value;
-                    }
-                    return applicator(item).value;
-                 })
-                */
-                );
+    var a = { i: 'a', value: 5 },
+        b = { i: 'b', value: 3, children: a },
+        c = { i: 'c', value: 3, children: [ b ] },
+        d = { i: 'd', value: 4 },
+        e = { i: 'e', value: 8 },
+        f = { i: 'f', value: 2, children: [ d, e ]},
+        root = { i: 'r', value: 1, children: [ f, c ] },
+        mapTask = ShimUtil.chain([
+          function(item, parent) {
+            mapResults.push({ item: item, parent: parent });
+            return item;
+          }
+        ]),
+        mapResults = [];
 
-    // preorder traversal is quite annoying to write reducers for
 
-    // postorder traversal - probably nicer, since you only need to handle:
-    // function reducer(item, children)
-    // - e.g. either the children is set => reduce it appropriately
-    // - or it's not set => redurn atomic value
+   // one way to write this
+    console.log(
+        (function reducer(item, parent, applicator){
+          if(Array.isArray(item)) {
+            return item.reduce(function(prev, subitem) {
+              // parent, not item: the parent of a an array item is not the array,
+              // but rather the element that contained the array
+              return prev + reducer(subitem, parent, applicator);
+            }, 0);
+          }
+          item = applicator(item, parent);
+          if(item.children) {
+            return item.value + reducer(item.children, item, applicator);
+          }
+          return item.value;
+       }(root, null, mapTask))
+      );
+     // another way to write this
+     /*
+     .reduce(function reducer(item, applicator){
+        if(item.children) {
+          if(Array.isArray(item.children)) {
+            return item.children.reduce(function(prev, child) {
+                return prev + reducer(child, applicator);
+              }, applicator(item).value);
+          }
+          return reducer(item.children, applicator) + applicator(item).value;
+        }
+        return applicator(item).value;
+     })
+    */
+    console.log(mapResults);
+
+    assert.equal(mapResults[0].item, root);
+    assert.equal(mapResults[0].parent, null);
+    assert.equal(mapResults[1].item, f);
+    assert.equal(mapResults[1].parent, root);
+    assert.equal(mapResults[2].item, d);
+    assert.equal(mapResults[2].parent, f);
+    assert.equal(mapResults[3].item, e);
+    assert.equal(mapResults[3].parent, f);
+    assert.equal(mapResults[4].item, c);
+    assert.equal(mapResults[4].parent, root);
+    assert.equal(mapResults[5].item, b);
+    assert.equal(mapResults[5].parent, c);
+    assert.equal(mapResults[6].item, a);
+    assert.equal(mapResults[6].parent, b);
+
 
   },
-
+/*
   'can walk a tree': function() {
 
     var Walker = new ShimUtil.Walk(
@@ -119,6 +129,7 @@ module.exports['shim util tests'] = {
                 );
 
   }
+*/
 };
 
 // if this module is the script being run, then run the tests:
