@@ -51,7 +51,7 @@ module.exports['shim util tests'] = {
         (function reducer(item, parent, applicator){
           if(Array.isArray(item)) {
             return item.reduce(function(prev, subitem) {
-              // parent, not item: the parent of a an array item is not the array,
+              // parent, not item: the parent of an array item is not the array,
               // but rather the element that contained the array
               return prev + reducer(subitem, parent, applicator);
             }, 0);

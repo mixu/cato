@@ -1,3 +1,5 @@
+TESTS += test/shim.util.test.js
+
 build:
 	@mkdir -p ./dist/
 	@echo 'Building dist/vjs.js'
@@ -10,4 +12,12 @@ build:
 	--out dist/vjs.js
 	@sed -i 's/..\/shim.js/..\/shim.web.js/g' dist/vjs.js
 
-.PHONY: build
+test:
+	@mocha \
+		--ui exports \
+		--reporter spec \
+		--slow 2000ms \
+		--bail \
+		$(TESTS)
+
+.PHONY: build test
