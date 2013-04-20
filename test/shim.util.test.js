@@ -4,7 +4,7 @@ var util = require('util'),
     ShimUtil = require('../lib/shim.util.js'),
     toHTML = require('htmlparser-to-html'),
     PlaceholderView = require('./lib/placeholder.js'),
-    Outlet = require('../index.js').Outlet;
+    Outlet = require('vjs2').Outlet;
 
 
 module.exports['shim util tests'] = {
@@ -47,8 +47,7 @@ module.exports['shim util tests'] = {
 
 
    // one way to write this
-    console.log(
-        (function reducer(item, parent, applicator){
+   var result = (function reducer(item, parent, applicator){
           if(Array.isArray(item)) {
             return item.reduce(function(prev, subitem) {
               // parent, not item: the parent of an array item is not the array,
@@ -61,8 +60,7 @@ module.exports['shim util tests'] = {
             return item.value + reducer(item.children, item, applicator);
           }
           return item.value;
-       }(root, null, mapTask))
-      );
+       }(root, null, mapTask));
      // another way to write this
      /*
      .reduce(function reducer(item, applicator){
@@ -77,7 +75,7 @@ module.exports['shim util tests'] = {
         return applicator(item).value;
      })
     */
-    console.log(mapResults);
+    // console.log(mapResults);
 
     assert.equal(mapResults[0].item, root);
     assert.equal(mapResults[0].parent, null);

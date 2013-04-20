@@ -1,4 +1,15 @@
 TESTS += test/shim.util.test.js
+TESTS += test/event.test.js
+TESTS += test/unirender.test.js
+TESTS += test/viewify.test.js
+
+test:
+	@mocha \
+		--ui exports \
+		--reporter list \
+		--slow 2000ms \
+		--bail \
+		$(TESTS)
 
 build:
 	@mkdir -p ./dist/
@@ -11,13 +22,5 @@ build:
 	--main lib/index.web.js \
 	--out dist/vjs.js
 	@sed -i 's/..\/shim.js/..\/shim.web.js/g' dist/vjs.js
-
-test:
-	@mocha \
-		--ui exports \
-		--reporter spec \
-		--slow 2000ms \
-		--bail \
-		$(TESTS)
 
 .PHONY: build test
