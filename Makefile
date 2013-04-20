@@ -2,6 +2,7 @@ TESTS += test/shim.util.test.js
 TESTS += test/event.test.js
 TESTS += test/unirender.test.js
 TESTS += test/viewify.test.js
+TESTS += test/model_binding.test.js
 
 test:
 	@mocha \
