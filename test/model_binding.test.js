@@ -2,7 +2,8 @@ var assert = require('assert'),
 
     PlaceholderView = require('./lib/placeholder.js'),
     Outlet = require('vjs2').Outlet,
-    $ = require('vjs2').Shim;
+    $ = require('vjs2').Shim,
+    Model = require('./lib/model.js');
 
 exports['model bindings'] = {
 
@@ -61,10 +62,10 @@ exports['model bindings'] = {
   'function with model listeners': function() {
     var currentState = 'none',
         evalCount = 0;
-    var view = $.viewify('div', {}, function() {
-        console.log('eval');
+    var view = $.viewify('div', {}, function(foo) {
+        console.log('eval', foo);
         evalCount++;
-        return 'Foo';
+        return 'The value is ' + foo;
       }).on('render', function() {
         console.log('render');
         currentState = 'render';
@@ -72,6 +73,10 @@ exports['model bindings'] = {
         console.log('attach');
         currentState = 'attach';
       });
+
+    var model = new Model({ foo: 'Foo'});
+    // must bind before render
+    view.bind(model);
 
     // attach to DOM
     $('body').update(view);
@@ -86,10 +91,13 @@ exports['model bindings'] = {
     // -> probably best make all the bound events an explicit
     //    property of the renderable object, since that makes it much easier to
     //    make assertions about the renderable. Implicit e.g. .on('destroy')
-    //    handlers are harder to assert about.
+    //    handlers are harder to assert about. -- actually since one can instrument that call it's fine
 
-
-    assert.equal($.html($.get('body')), '<html><div id="1">Foo</div></html>');
+    assert.equal($.html($.get('body')), '<html><div id="1">The value is Foo</div></html>');
+    console.log($.html($.get('body')));
+    model.set('foo', 'Bar');
+    console.log($.html($.get('body')));
+    assert.equal($.html($.get('body')), '<html><div id="1">The value is Bar</div></html>');
   },
 
 
@@ -98,18 +106,21 @@ exports['model bindings'] = {
   // - should add event listeners on "attach"
   // - should detach event listeners on "destroy"
 
+  // 3. "onX attribute binding": a function that responds to DOM events
+
+
   // Specialty bindings
 
-  // 3. "2-way form value binding": a function that bounds to the "value" attribute on one of the following tags:
+  // 4. "2-way form value binding": a function that bounds to the "value" attribute on one of the following tags:
   // - input[text], input[password], textarea, select
   // - should work as a two-way binding (e.g. it should also generate DOM change event
   //   handlers/listeners, as well as the normal model event listeners)
 
-  // 4. "CSS attribute value binding": Toggling a CSS attribute, such as "display:" / recalculating a CSS attribute.
+  // 5. "CSS attribute value binding": Toggling a CSS attribute, such as "display:" / recalculating a CSS attribute.
   // CSS attributes are like individual, orthogonal attributes, but they are applied as a single
   // underlying string in the DOM rather than being direct attributes.
 
-  // 5. "CSS class toggling binding": Adding and removing classes. Classes work like sets of strings, there can be multiple
+  // 6. "CSS class toggling binding": Adding and removing classes. Classes work like sets of strings, there can be multiple
   // handlers that either apply or remove a class to the "class" attribute.
   // Note that there can be multiple bindings.
   // Note that these may be in addition to a static set of classes.
