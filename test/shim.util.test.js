@@ -77,22 +77,14 @@ module.exports['shim util tests'] = {
     */
     // console.log(mapResults);
 
-    assert.equal(mapResults[0].item, root);
-    assert.equal(mapResults[0].parent, null);
-    assert.equal(mapResults[1].item, f);
-    assert.equal(mapResults[1].parent, root);
-    assert.equal(mapResults[2].item, d);
-    assert.equal(mapResults[2].parent, f);
-    assert.equal(mapResults[3].item, e);
-    assert.equal(mapResults[3].parent, f);
-    assert.equal(mapResults[4].item, c);
-    assert.equal(mapResults[4].parent, root);
-    assert.equal(mapResults[5].item, b);
-    assert.equal(mapResults[5].parent, c);
-    assert.equal(mapResults[6].item, a);
-    assert.equal(mapResults[6].parent, b);
+    var itemPath = mapResults.map(function(item) { return item.item.i; }).join(','),
+        parentPath = mapResults.map(function(item) { return (item.parent ? item.parent.i : '!'); }).join(',');
 
+    console.log('items:', itemPath);
+    console.log('parents:', parentPath);
 
+    assert.equal(itemPath,   'r,f,d,e,c,b,a');
+    assert.equal(parentPath, '!,r,f,f,r,c,b');
   },
 /*
   'can walk a tree': function() {
@@ -128,6 +120,36 @@ module.exports['shim util tests'] = {
 
   }
 */
+
+  'dfsTraverse can traverse a tree of tags, with parentTag': function() {
+    var a = { i: 'a', value: 5 },
+        b = { i: 'b', value: 3, children: a },
+        c = { i: 'c', value: 3, children: [ b ] },
+        d = { i: 'd', value: 4 },
+        e = { i: 'e', value: 8 },
+        f = { i: 'f', value: 2, children: [ d, e ]},
+        root = { i: 'r', value: 1, children: [ f, c ] },
+        mapResults = [];
+
+    ShimUtil.dfsTraverse(root, function(item, parentTag) {
+      mapResults.push({ item: item, parentTag: parentTag });
+      return item;
+    });
+
+    var itemPath = mapResults.map(function(item) { return item.item.i; }).join(','),
+        parentPath = mapResults.map(function(item) { return (item.parentTag ? item.parentTag.i : '!'); }).join(',');
+
+    console.log('items:', itemPath);
+    console.log('parents:', parentPath);
+
+    assert.equal(itemPath,   'r,f,d,e,c,b,a');
+    assert.equal(parentPath, '!,r,f,f,r,c,b');
+  },
+
+  'dfsTraverse can traverse a tree of tags and views, with parentTag and parentView': function() {
+
+  }
+
 };
 
 // if this module is the script being run, then run the tests:
