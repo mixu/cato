@@ -5,7 +5,41 @@ var assert = require('assert'),
     $ = require('vjs2').Shim,
     Model = require('./lib/model.js');
 
+var id = 1000;
+
+function instrument(view, bindCalls, viewEvents, listenerCalls) {
+  view.on('render', function() {
+        viewEvents.push('render');
+      }).on('attach', function() {
+        viewEvents.push('attach');
+      });
+  var oldListenTo = view.listenTo;
+  view.listenTo = function(target, eventName, callback) {
+    var callId = id++;
+    bindCalls.push([ 'listenTo', callId, target, eventName, callback ]);
+    return oldListenTo.call(this, target, eventName, function() {
+      var args = Array.prototype.slice.call(arguments, 0);
+      listenerCalls.push([ 'model', callId, eventName, callback, args ]);
+      return callback.apply(this, args);
+    });
+  };
+  var oldListenDom = view.listenDom;
+  view.listenDom = function(selector, callback) {
+    var callId = id++;
+    bindCalls.push([ 'listenDom', callId, selector, callback ]);
+    return oldListenDom.call(this, selector, function() {
+      var args = Array.prototype.slice.call(arguments, 0);
+      listenerCalls.push([ 'DOM', callId, selector, callback, args]);
+      return callback.apply(this, args);
+    });
+  };
+}
+
 exports['model bindings'] = {
+
+  beforeEach: function() {
+    $._reset();
+  },
 
   // [point to bind to]
   //    <= [operation to perform] = [expression to calculate](events that cause expression to trigger)
@@ -15,8 +49,6 @@ exports['model bindings'] = {
   // - object.set(key, value)
   // The expression is any function that returns a value.
   //
-
-
 
   // the value can obviously be text, tags, views or outlets (that's tested elsewhere)
 
@@ -60,19 +92,15 @@ exports['model bindings'] = {
   */
 
   'function with model listeners': function() {
-    var currentState = 'none',
-        evalCount = 0;
-    var view = $.viewify('div', {}, function(foo) {
+    var evalCount = 0,
+       view = $.viewify('div', {}, function(foo) {
         console.log('eval', foo);
         evalCount++;
         return 'The value is ' + foo;
-      }).on('render', function() {
-        console.log('render');
-        currentState = 'render';
-      }).on('attach', function() {
-        console.log('attach');
-        currentState = 'attach';
-      });
+      }),
+      bindCalls = [], viewEvents = [], listenerCalls = [];
+    // instrument view
+    instrument(view, bindCalls, viewEvents, listenerCalls);
 
     var model = new Model({ foo: 'Foo'});
     // must bind before render
@@ -84,20 +112,16 @@ exports['model bindings'] = {
     // assert that the function was rendered (a: should be run on "render")
     assert.ok(evalCount > 0);
     // assert that DOM events were attached on "attach"
-    // e.g. that calls like this: $(evt.selector).on('click', evt.cb);
-    // were made
-
-    // the question is, where to store all this stuff
-    // -> probably best make all the bound events an explicit
-    //    property of the renderable object, since that makes it much easier to
-    //    make assertions about the renderable. Implicit e.g. .on('destroy')
-    //    handlers are harder to assert about. -- actually since one can instrument that call it's fine
+    assert.ok(bindCalls.some(function(item) {
+      return item[0] == 'listenTo' && item[3] == 'change:foo';
+    }));
 
     assert.equal($.html($.get('body')), '<html><div id="1">The value is Foo</div></html>');
     console.log($.html($.get('body')));
     model.set('foo', 'Bar');
     console.log($.html($.get('body')));
     assert.equal($.html($.get('body')), '<html><div id="1">The value is Bar</div></html>');
+    console.log(bindCalls, viewEvents, listenerCalls);
   },
 
 
@@ -106,26 +130,10 @@ exports['model bindings'] = {
   // - should add event listeners on "attach"
   // - should detach event listeners on "destroy"
   'function as attribute binding': function() {
-    var view = $.viewify('div', { class: function(foo) {
-          return 'sort-'+foo;
-        }
-      }, 'Text').on('render', function() {
-        console.log('render');
-        currentState = 'render';
-      }).on('attach', function() {
-        console.log('attach');
-        currentState = 'attach';
-      });
-
-    var calls = [];
-
+    var view = $.viewify('div', { class: function(foo) { return 'sort-'+foo; } }, 'Text'),
+      bindCalls = [], viewEvents = [], listenerCalls = [];
     // instrument view
-    var oldListenTo = view.listenTo;
-    view.listenTo = function(target, eventName, callback) {
-      calls.push([ 'listenTo', target, eventName, callback ]);
-      return oldListenTo.call(this, target, eventName, callback);
-    };
-
+    instrument(view, bindCalls, viewEvents, listenerCalls);
 
     var model = new Model({ foo: 'Foo'});
     // must bind before render
@@ -135,7 +143,7 @@ exports['model bindings'] = {
     $('body').update(view);
     console.log($.html($.get('body')));
 
-    console.log(calls);
+    console.log(bindCalls, viewEvents, listenerCalls);
   },
 
   // 3. "onX attribute binding": a function that responds to DOM events
@@ -144,17 +152,15 @@ exports['model bindings'] = {
   'function as onX attribute binding': function() {
     var view = $.viewify('div', { onclick: function() {
         console.log('clicked!');
-      }}, 'Bar').on('render', function() {
-        console.log('render');
-        currentState = 'render';
-      }).on('attach', function() {
-        console.log('attach');
-        currentState = 'attach';
-      });
+      }}, 'Bar'),
+      bindCalls = [], viewEvents = [], listenerCalls = [];
+    // instrument view
+    instrument(view, bindCalls, viewEvents, listenerCalls);
 
     // attach to DOM
     $('body').update(view);
     console.log($.html($.get('body')));
+    console.log(bindCalls, viewEvents, listenerCalls);
   },
 
 

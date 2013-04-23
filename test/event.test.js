@@ -4,6 +4,8 @@ var assert = require('assert'),
     Outlet = require('vjs2').Outlet,
     $ = require('vjs2').Shim;
 
+var pretty = require('html').prettyPrint;
+
 /*
   There are certain events that must be triggered during the view lifecycle.
 
@@ -133,12 +135,13 @@ exports['event tests - nested events'] = {
     // attach is always invoked with the top level element
     $('body').update($.tag('body', {}, this.input));
     // console.log(this.events);
+    // console.log(pretty($.html($.get('body'))));
     this.check();
   },
 
 
   'attach and render events are emitted on an array, and all its descendants': function() {
-      $('body').update(this.input);
+    $('body').update(this.input);
     this.check();
   },
 
