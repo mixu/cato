@@ -105,11 +105,43 @@ exports['model bindings'] = {
   // - should be run on "render"
   // - should add event listeners on "attach"
   // - should detach event listeners on "destroy"
+  'function as attribute binding': function() {
+    var view = $.viewify('div', { class: function(foo) {
+          return 'sort-'+foo;
+        }
+      }, 'Text').on('render', function() {
+        console.log('render');
+        currentState = 'render';
+      }).on('attach', function() {
+        console.log('attach');
+        currentState = 'attach';
+      });
+
+    var calls = [];
+
+    // instrument view
+    var oldListenTo = view.listenTo;
+    view.listenTo = function(target, eventName, callback) {
+      calls.push([ 'listenTo', target, eventName, callback ]);
+      return oldListenTo.call(this, target, eventName, callback);
+    };
+
+
+    var model = new Model({ foo: 'Foo'});
+    // must bind before render
+    view.bind(model);
+
+    // attach to DOM
+    $('body').update(view);
+    console.log($.html($.get('body')));
+
+    console.log(calls);
+  },
 
   // 3. "onX attribute binding": a function that responds to DOM events
   // - should cause a DOM event listener to be registered
 
-  'function with onX attribute binding': function() {
+  'function as onX attribute binding': function() {
     var view = $.viewify('div', { onclick: function() {
         console.log('clicked!');
       }}, 'Bar').on('render', function() {
