@@ -180,6 +180,29 @@ exports['model bindings'] = {
   // Note that there can be multiple bindings.
   // Note that these may be in addition to a static set of classes.
 
+  // Niceties
+
+  'given a view with tags with bound values and bound attributes, manually assigning ids to the tags with bindings is optional': function() {
+    var view = $.viewify('div', {}, [
+        $.tag('span', {}, function(firstname, surname) { return 'Hello '+ firstname + ' ' + surname; }),
+        $.tag('span', { class: function(surname) { return surname; } }, 'Foo')
+      ]);
+    var model = new Model({ firstname: 'Coder', surname: 'Cat'});
+    // must bind before render
+    view.bind(model);
+    // attach to DOM
+    $('body').update(view);
+    console.log($.html($.get('body')));
+
+    // the key is - are the event listeners working correctly?
+
+    model.set('firstname', 'Hipster');
+    model.set('surname', 'Partycat');
+    console.log($.html($.get('body')));
+
+  }
+
+
 };
 
 // if this module is the script being run, then run the tests:
