@@ -244,6 +244,14 @@ module.exports['shim util tests'] = {
       }
       return item;
     })));
+  },
+
+  'allow tag(name, attr, content) to be called as tag(name, content)': function() {
+    assert.deepEqual($.tag('div', {}, 'FooBar'), $.tag('div', 'FooBar'));
+  },
+
+  'allow tag(name, attr, content) to be called as tag(name)': function() {
+    assert.deepEqual($.tag('div', {}, ''), $.tag('div'));
   }
 
 };
