@@ -107,6 +107,23 @@ exports['model bindings'] = {
   // - should detach event listeners on "destroy"
 
   // 3. "onX attribute binding": a function that responds to DOM events
+  // - should cause a DOM event listener to be registered
+
+  'function with onX attribute binding': function() {
+    var view = $.viewify('div', { onclick: function() {
+        console.log('clicked!');
+      }}, 'Bar').on('render', function() {
+        console.log('render');
+        currentState = 'render';
+      }).on('attach', function() {
+        console.log('attach');
+        currentState = 'attach';
+      });
+
+    // attach to DOM
+    $('body').update(view);
+    console.log($.html($.get('body')));
+  },
 
 
   // Specialty bindings
