@@ -6,6 +6,7 @@ var util = require('util'),
     PlaceholderView = require('./lib/placeholder.js'),
     Outlet = require('vjs2').Outlet;
 
+var pretty = require('html').prettyPrint;
 
 module.exports['shim util tests'] = {
 
@@ -131,8 +132,10 @@ module.exports['shim util tests'] = {
         root = { id: 'r', children: [ f, c ] },
         mapResults = [];
 
-    ShimUtil.dfsTraverse(root, function(item, parentTag) {
-      mapResults.push({ item: item, parentTag: parentTag });
+    ShimUtil.dfsTraverse(root, function(tag, view, parentTag) {
+      // skip text nodes
+      if(tag.type && tag.type == 'text') return;
+      mapResults.push({ item: tag, parentTag: parentTag });
       return item;
     });
 
@@ -164,30 +167,33 @@ module.exports['shim util tests'] = {
             $.tag('h2', { id: 'b' }, 'Foo') // parent tag is a, no parent view
           ),
           new PlaceholderView('Placeholder'), // no parent tag, no parent view
-          new Outlet('table', { id: 'c' }, [ // no parent tag, no parent view
+          new Outlet('table', { id: 'C' }, [ // no parent tag, no parent view
             $.tag('h3', { id: 'd' }, 'Foo2'), // parent tag is c, parent view is c
             new PlaceholderView('Placeholder2'), // parent tag is c, parentview is c
-            new Outlet('table', { id: 'e' }, // parent tag is c, parent view is c
+            new Outlet('table', { id: 'E' }, // parent tag is c, parent view is c
               $.tag('h3', { id: 'f' }, 'Last') // parent tag is e, parent view is e
               ),
           ]),
         ],
         mapResults = [];
 
-    ShimUtil.dfsTraverse(root, function(item, parentTag, parentView) {
-      if(!item.render) {
-        console.log('item:',
-            (item && item.attribs && item.attribs.id ? item.attribs.id : JSON.stringify(item)),
-            (parentTag && parentTag.attribs && parentTag.attribs.id ? parentTag.attribs.id : JSON.stringify(parentView)),
-            (parentView && parentView.id ? parentView.id : JSON.stringify(parentView))
-            );
-        mapResults.push({ item: item, parentTag: parentTag, parentView: parentView });
-      }
-      return item;
+    ShimUtil.dfsTraverse(root, function(tag, view, parentTag, parentView) {
+     // skip text nodes
+      if(tag.type && tag.type == 'text') return;
+      console.log('item:',
+          (tag && tag.attribs && tag.attribs.id ? tag.attribs.id : JSON.stringify(tag)),
+          (view && view.id ? view.id : JSON.stringify(view)),
+          (parentTag && parentTag.attribs && parentTag.attribs.id ? parentTag.attribs.id : JSON.stringify(parentTag)),
+          (parentView && parentView.id ? parentView.id : JSON.stringify(parentView))
+          );
+      mapResults.push({ tag: tag, view: view, parentTag: parentTag, parentView: parentView });
     });
 
-    var itemPath = mapResults.map(function(item) {
-          return (item.item && item.item.attribs && item.item.attribs.id ? item.item.attribs.id : '?');
+    var tagPath = mapResults.map(function(item) {
+          return (item.tag && item.tag.attribs && item.tag.attribs.id ? item.tag.attribs.id : '?');
+        }).join(','),
+        viewPath = mapResults.map(function(item) {
+          return (item.view && item.view.id ? item.view.id : '?');
         }).join(','),
         parentPath = mapResults.map(function(item) {
           return (item.parentTag && item.parentTag.attribs && item.parentTag.attribs.id ? item.parentTag.attribs.id : '!');
@@ -197,13 +203,47 @@ module.exports['shim util tests'] = {
         }).join(',');
 
 
-    console.log('items:   ', itemPath);
+    console.log('tags:    ', tagPath);
+    console.log('views:   ', viewPath);
     console.log('parTags: ', parentPath);
     console.log('parViews:', parentViewPath);
 
-    assert.equal(itemPath,   'a,b,1,c,d,2,e,f');
-    assert.equal(parentPath, '!,a,!,!,c,c,c,e');
+    assert.equal(tagPath,        'a,b,1,C,d,2,E,f');
+    assert.equal(viewPath,       '?,?,1,C,?,2,E,?');
+    assert.equal(parentPath,     '!,a,!,!,C,C,C,E');
+    assert.equal(parentViewPath, '!,!,!,!,C,C,C,E');
 
+  },
+
+  'dfsTraverse can be used to collect a tags-only tree': function() {
+    var root = [
+          $.tag('h1', { id: 'a' }, // no parent tag, no parent view
+            $.tag('h2', { id: 'b' }, 'Foo') // parent tag is a, no parent view
+          ),
+          new PlaceholderView('Placeholder'), // no parent tag, no parent view
+          new Outlet('table', { id: 'C' }, [ // no parent tag, no parent view
+            $.tag('h3', { id: 'd' }, 'Foo2'), // parent tag is c, parent view is c
+            new PlaceholderView('Placeholder2'), // parent tag is c, parentview is c
+            new Outlet('table', { id: 'E' }, // parent tag is c, parent view is c
+              $.tag('h3', { id: 'f' }, 'Last') // parent tag is e, parent view is e
+              ),
+          ]),
+        ],
+        rootTags = [];
+    ShimUtil.dfsTraverse(root, function(tag, view, parentTag, parentView) {
+      if(!parentTag) {
+        // no parent == root tag
+        rootTags.push(tag);
+      }
+    });
+
+    console.log(util.inspect(rootTags, null, 10, true));
+    console.log(pretty(toHTML(rootTags, null, function(item) {
+      if(item.render) {
+        return item._renderCache;
+      }
+      return item;
+    })));
   }
 
 };

@@ -22,5 +22,8 @@
     "gluejs": "~0.2.1",
     "htmlparser": "~1.7.6",
     "htmlparser-to-html": "~0.0.2"
+  },
+  "devDependencies": {
+    "html": "0.0.7"
   }
 }
