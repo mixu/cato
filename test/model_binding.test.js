@@ -3,6 +3,7 @@ var assert = require('assert'),
     PlaceholderView = require('./lib/placeholder.js'),
     Outlet = require('vjs2').Outlet,
     $ = require('vjs2').Shim,
+    View = require('vjs2').View,
     Model = require('./lib/model.js');
 
 var id = 1000;
@@ -187,19 +188,62 @@ exports['model bindings'] = {
         $.tag('span', {}, function(firstname, surname) { return 'Hello '+ firstname + ' ' + surname; }),
         $.tag('span', { class: function(surname) { return surname; } }, 'Foo')
       ]);
-    var model = new Model({ firstname: 'Coder', surname: 'Cat'});
+    var model = new Model({ firstname: 'Coder', surname: 'Cat'}),
+        result;
     // must bind before render
     view.bind(model);
     // attach to DOM
     $('body').update(view);
-    console.log($.html($.get('body')));
+    result = $.html($.get('body'));
+    assert.ok(/.*Hello Coder Cat.*/.test(result));
 
     // the key is - are the event listeners working correctly?
 
     model.set('firstname', 'Hipster');
     model.set('surname', 'Partycat');
-    console.log($.html($.get('body')));
+    result = $.html($.get('body'));
+    assert.ok(/.*Hello Hipster Partycat.*/.test(result));
 
+  },
+
+  // Incremental re-render
+
+  'it should be possible to update the contents of an attached view with new renderables that include bindings': function() {
+    // for example, when you want to update the content of a view on bind
+
+    function IncrementalView() {
+      View.call(this);
+    }
+
+    View.mixin(IncrementalView);
+
+    IncrementalView.prototype._render = function() {
+      this.id = $.id();
+      return $.tag('div', { id: this.id }, 'Not yet bound');
+    };
+
+    IncrementalView.prototype.bind = function(model) {
+      this.model = model;
+      console.log(model);
+      $(this.id).update($.tag('p', {}, new Function('firstname', 'return firstname;')));
+    };
+
+    var model = new Model({ firstname: 'Hello world'});
+    var view = new IncrementalView();
+
+    // attach to DOM
+    $('body').update(view);
+    var result = $.html($.get('body'));
+    console.log(result);
+    assert.ok(/.*Not yet bound.*/.test(result));
+    assert.ok(/.*Hello world.*/.test(result) == false);
+
+    // now update the content of the view with new renderables - after the view has been attached
+    view.bind(model);
+    result = $.html($.get('body'));
+    console.log(result);
+    assert.ok(/.*Not yet bound.*/.test(result) == false);
+    assert.ok(/.*Hello world.*/.test(result));
   }
 
 
