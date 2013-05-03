@@ -132,7 +132,7 @@ module.exports['shim util tests'] = {
         root = { id: 'r', children: [ f, c ] },
         mapResults = [];
 
-    ShimUtil.dfsTraverse(root, function(tag, view, parentTag) {
+    ShimUtil.dfsTraverse(root, undefined, undefined, function(tag, view, parentTag) {
       // skip text nodes
       if(tag.type && tag.type == 'text') return;
       mapResults.push({ item: tag, parentTag: parentTag });
@@ -177,7 +177,7 @@ module.exports['shim util tests'] = {
         ],
         mapResults = [];
 
-    ShimUtil.dfsTraverse(root, function(tag, view, parentTag, parentView) {
+    ShimUtil.dfsTraverse(root, undefined, undefined, function(tag, view, parentTag, parentView) {
      // skip text nodes
       if(tag.type && tag.type == 'text') return;
       console.log('item:',
@@ -230,7 +230,7 @@ module.exports['shim util tests'] = {
           ]),
         ],
         rootTags = [];
-    ShimUtil.dfsTraverse(root, function(tag, view, parentTag, parentView) {
+    ShimUtil.dfsTraverse(root, undefined, undefined, function(tag, view, parentTag, parentView) {
       if(!parentTag) {
         // no parent == root tag
         rootTags.push(tag);

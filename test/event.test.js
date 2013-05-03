@@ -81,6 +81,25 @@ exports['event tests -'] = {
 
     // attach is always invoked with the top level element
     $('body').update(item);
+  },
+
+  'show and hide events are emitted on a view': function(done) {
+    var item = new PlaceholderView('Hello'),
+        events = [];
+
+    item.once('show', function() {
+      events.push('show');
+    });
+    item.once('hide', function() {
+      events.push('hide');
+      assert.ok(events.some(function(item) { return item == 'show'; }));
+      assert.ok(events.some(function(item) { return item == 'hide'; }));
+      done();
+    });
+    $.html(item);
+
+    item.toggle(true);
+    item.toggle(false);
   }
 };
 
@@ -188,7 +207,12 @@ exports['event tests - outlet'] = {
       assert.ok(events.some(function(item) { return item[0] == 'attach' && item[1] == name; }));
       assert.ok(events.some(function(item) { return item[0] == 'destroy' && item[1] == name; }));
     });
+  },
+
+  'show and hide events are emitted on the contents when calling outlet.toggle()': function() {
+
   }
+
 };
 
 // if this module is the script being run, then run the tests:

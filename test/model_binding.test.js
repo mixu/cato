@@ -244,17 +244,6 @@ exports['model bindings'] = {
     console.log(result);
     assert.ok(/.*Not yet bound.*/.test(result) == false);
     assert.ok(/.*Hello world.*/.test(result));
-
-
-    function JsonTreeView() {
-      CollectionView.call(this, 'ul');
-      this._childView = IncrementalView;
-    }
-
-    CollectionView.mixin(JsonTreeView);
-
-
-
   }
 
 
