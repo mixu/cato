@@ -62,7 +62,51 @@ exports['given a collection'] = {
 
     // 3) Removing an element from the collection should be reflected in the view
     // 4) Resetting the collection should reset the view
+  },
+
+  'render method wrapper': function() {
+    // define class
+
+    function TableView() {
+      CollectionView.call(this, 'ul', {}, '');
+      this._childView = NameOnlyRow;
+    }
+
+    CollectionView.mixin(TableView);
+
+    TableView.prototype._render = function(outlet) {
+      this.id = $.id();
+
+      return $.tag('section', { id: this.id }, [
+          $.tag('p', { }, 'Header'),
+          // outlet
+          outlet,
+          $.tag('div', { }, 'Footer')
+        ]);
+    };
+
+    // use
+    var tableView = new TableView(),
+        table = new Collection([
+          { name: 'Project Vega', records: 4834,  last_modified: new Date() }
+        ], { model: DummyModel });
+
+    // render before piping
+    // 0) Can render the collection (empty)
+    assert.equal($.html(tableView), '<section id="5"><p>Header</p><ul id="4"></ul><div>Footer</div></section>');
+
+    // 0) Can render the collection (after .pipe())
+    table.pipe(tableView);
+    assert.equal($.html(tableView), '<section id="5"><p>Header</p><ul id="4"><li id="6">Project Vega</li></ul><div>Footer</div></section>');
+    // 1) Adding an element to the collection should be reflected in the view
+    table.add({name: 'Project Foo', records: 123,  last_modified: new Date() });
+    assert.equal($.html(tableView), '<section id="5"><p>Header</p><ul id="4"><li id="6">Project Vega</li><li id="7">Project Foo</li></ul><div>Footer</div></section>');
+    // 2) Changing an element property should be reflected in the view
+    table.get(1).set('name', 'Project Bar');
+    assert.equal($.html(tableView), '<section id="5"><p>Header</p><ul id="4"><li id="6">Project Vega</li><li id="7">Project Bar</li></ul><div>Footer</div></section>');
+
   }
+
 };
 
 // if this module is the script being run, then run the tests:
