@@ -2,7 +2,8 @@ var assert = require('assert'),
 
     PlaceholderView = require('./lib/placeholder.js'),
     Outlet = require('vjs2').Outlet,
-    $ = require('vjs2').Shim;
+    $ = require('vjs2').Shim,
+    microEE = require('microee');
 
 var pretty = require('html').prettyPrint;
 
@@ -100,6 +101,86 @@ exports['event tests -'] = {
 
     item.toggle(true);
     item.toggle(false);
+  },
+
+  /*
+    Views can also be bound.
+
+    - any listeners connected via .listenTo should be
+      - unbindable (e.g. .unbind(model) should remove the subscriptions)
+      - rebindable (e.g. .rebind(model) should unbind, the re-establish the subscriptions)
+
+  */
+
+  'unbind and rebind events': {
+
+    beforeEach: function() {
+      var self = this;
+      this.events = [];
+      this.model1 = {
+        on: function(event, cb) { self.events.push({ fn: 'on', id: 1 }) },
+        removeListener: function(event, cb) { self.events.push({ fn: 'removeListener', id: 1 }) }
+      };
+      this.model2 = {
+        on: function(event, cb) { self.events.push({ fn: 'on', id: 2 }) },
+        removeListener: function(event, cb) { self.events.push({ fn: 'removeListener', id: 2 }) }
+      };
+    },
+
+    'can unbind a specific model or all models': function() {
+      var item = new PlaceholderView('Hello');
+
+      item.listenTo(this.model1, 'change:foo', function() {
+        console.log('foo');
+      });
+
+      item.listenTo(this.model2, 'change:foo', function() {
+        console.log('foo 2');
+      });
+
+      item.emit('unbind', this.model1);
+
+      // must only unbind the first model
+      assert.ok(this.events.some(function(item) {
+        return item.fn == 'removeListener' && item.id == 1;
+      }));
+      assert.ok(!this.events.some(function(item) {
+        return item.fn == 'removeListener' && item.id == 2;
+      }));
+
+      // now, unbind the rest (e.g the other model)
+      item.emit('unbind');
+      assert.ok(this.events.some(function(item) {
+        return item.fn == 'removeListener' && item.id == 2;
+      }));
+    },
+
+    'can rebind a specific model': function() {
+      var item = new PlaceholderView('Hello');
+
+      item.listenTo(this.model1, 'change:foo', function() {
+        console.log('foo');
+      });
+
+      // invoke the rebind -> should cause unbind on model1 and same event to be attached on model2
+      item.emit('rebind', this.model1, this.model2);
+
+      assert.deepEqual(this.events, [
+          { fn: 'on', id: 1 },
+          { fn: 'removeListener', id: 1 },
+          { fn: 'on', id: 2 } ]);
+
+      // invoke the rebind -> should cause unbind on model1 and same event to be attached on model2
+      item.emit('rebind', this.model2, this.model1);
+
+      assert.deepEqual(this.events, [
+          { fn: 'on', id: 1 },
+          { fn: 'removeListener', id: 1 },
+          { fn: 'on', id: 2 },
+          { fn: 'removeListener', id: 2 },
+          { fn: 'on', id: 1 } ]);
+    }
+
   }
 };
 
