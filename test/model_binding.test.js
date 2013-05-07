@@ -244,6 +244,47 @@ exports['model bindings'] = {
     console.log(result);
     assert.ok(/.*Not yet bound.*/.test(result) == false);
     assert.ok(/.*Hello world.*/.test(result));
+  },
+
+  'when the new content in update() does not contain any root views, but contains tags that expect "attach", they should still call listenTo / listenDom on the parent': function() {
+    function IncrementalView() {
+      View.call(this);
+    }
+
+    View.mixin(IncrementalView);
+
+    IncrementalView.prototype._render = function() {
+      this.id = $.id();
+      return $.tag('div', { id: this.id }, 'Not yet bound');
+    };
+
+    IncrementalView.prototype.updateContent = function() {
+      $(this.id).update($.tag('p', {
+        onFoo: function() { console.log('bar'); }
+      }, 'Baz'));
+    };
+    var model = new Model({ firstname: 'Hello world'});
+    var view = new IncrementalView(),
+        bindCalls = [], viewEvents = [], listenerCalls = [];
+    // instrument view
+    instrument(view, bindCalls, viewEvents, listenerCalls);
+
+    // attach to DOM
+    $('body').update(view);
+    // no calls to .listenDOM yet
+    assert.deepEqual(bindCalls, []);
+    // warning: doing additional renders will fix the bug unintentionally!
+    assert.equal(viewEvents.filter(function(evt) { return evt == 'attach' }).length, 1);
+    view.updateContent();
+
+    // the key here is: when the dfsTraverse is done, and no views were found, then emit attach on the parent.
+    // might want to rethink attach anyway, since it seems to only apply for the short duration of the _attach call...
+
+    assert.equal(viewEvents.filter(function(evt) { return evt == 'attach' }).length, 2);
+    // should have one call, which is `.listenDom` for the "onFoo" listener in the update(tags)
+    assert.ok(bindCalls.some(function(item) {
+      return item[0] == 'listenDom' && item[2] == 'foo #2';
+    }));
   }
 
 
