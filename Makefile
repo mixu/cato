@@ -22,7 +22,7 @@ build:
 	--global Vjs2 \
 	--main lib/index.web.js \
 	--out dist/vjs.js
-	@sed -i 's/..\/shim.js/..\/shim.web.js/g' dist/vjs.js
+	@sed -i '' 's/..\/shim.js/..\/shim.web.js/g' dist/vjs.js
 	@cat dist/vjs.js > dist/dummy; $ cat node_modules/minilog/dist/minilog.js dist/dummy > dist/vjs.js
 	@rm dist/dummy
 
