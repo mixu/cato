@@ -4,6 +4,8 @@ TESTS += test/unirender.test.js
 TESTS += test/viewify.test.js
 TESTS += test/model_binding.test.js
 
+UNAME := $(shell uname)
+
 test:
 	@mocha \
 		--ui exports \
@@ -22,7 +24,12 @@ build:
 	--global Vjs2 \
 	--main lib/index.web.js \
 	--out dist/vjs.js
+ifeq ($(UNAME), Linux)
+	@sed -i 's/..\/shim.js/..\/shim.web.js/g' dist/vjs.js
+endif
+ifeq ($(UNAME), Darwin)
 	@sed -i '' 's/..\/shim.js/..\/shim.web.js/g' dist/vjs.js
+endif
 	@cat dist/vjs.js > dist/dummy; $ cat node_modules/minilog/dist/minilog.js dist/dummy > dist/vjs.js
 	@rm dist/dummy
 
