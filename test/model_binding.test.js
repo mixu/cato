@@ -1,9 +1,9 @@
 var assert = require('assert'),
 
     PlaceholderView = require('./lib/placeholder.js'),
-    Outlet = require('vjs2').Outlet,
-    $ = require('vjs2').Shim,
-    View = require('vjs2').View,
+    Outlet = require('cato').Outlet,
+    $ = require('cato').Shim,
+    View = require('cato').View,
     Model = require('./lib/model.js');
 
 var id = 1000;

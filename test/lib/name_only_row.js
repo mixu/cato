@@ -1,5 +1,5 @@
-var View = require('vjs2').View,
-    $ = require('vjs2').Shim;
+var View = require('cato').View,
+    $ = require('cato').Shim;
 
 function ItemView() {
   View.call(this);

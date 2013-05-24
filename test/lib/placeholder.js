@@ -1,5 +1,5 @@
-var View = require('../../index.js').View,
-    $ = require('../../index.js').Shim;
+var View = require('../../lib/index.js').View,
+    $ = require('../../lib/index.js').Shim;
 
 function PlaceholderView(text) {
   View.call(this);

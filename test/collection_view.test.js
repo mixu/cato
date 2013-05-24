@@ -2,10 +2,10 @@ var assert = require('assert'),
     pretty = require('html').prettyPrint,
 
     PlaceholderView = require('./lib/placeholder.js'),
-    Outlet = require('vjs2').Outlet,
-    $ = require('vjs2').Shim,
-    Collection = require('vjs2').Collection,
-    CollectionView = require('vjs2').CollectionView,
+    Outlet = require('cato').Outlet,
+    $ = require('cato').Shim,
+    Collection = require('cato').Collection,
+    CollectionView = require('cato').CollectionView,
     DummyModel = require('./lib/model.js'),
     NameOnlyRow = require('./lib/name_only_row.js');
 

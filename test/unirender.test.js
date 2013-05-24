@@ -1,8 +1,8 @@
 var assert = require('assert'),
 
     PlaceholderView = require('./lib/placeholder.js'),
-    Outlet = require('vjs2').Outlet,
-    $ = require('vjs2').Shim;
+    Outlet = require('cato').Outlet,
+    $ = require('cato').Shim;
 //    htmlparser = require('htmlparser');
 
 if(typeof exports == 'undefined') { exports = {}; }

@@ -16,21 +16,21 @@ test:
 
 build:
 	@mkdir -p ./dist/
-	@echo 'Building dist/vjs.js'
+	@echo 'Building dist/cato.js'
 	@./node_modules/gluejs/bin/gluejs \
 	--include ./lib/common ./lib/web \
 	--replace jQuery=window.jQuery,minilog=window.Minilog \
 	--npm microee,htmlparser-to-html \
-	--global Vjs2 \
+	--global Cato \
 	--main lib/web/index.js \
-	--out dist/vjs.js
+	--out dist/cato.js
 ifeq ($(UNAME), Linux)
-	@sed -i 's/..\/shim.js/..\/shim.web.js/g' dist/vjs.js
+	@sed -i 's/..\/shim.js/..\/shim.web.js/g' dist/cato.js
 endif
 ifeq ($(UNAME), Darwin)
-	@sed -i '' 's/..\/shim.js/..\/shim.web.js/g' dist/vjs.js
+	@sed -i '' 's/..\/shim.js/..\/shim.web.js/g' dist/cato.js
 endif
-	@cat dist/vjs.js > dist/dummy; $ cat node_modules/minilog/dist/minilog.js dist/dummy > dist/vjs.js
+	@cat dist/cato.js > dist/dummy; $ cat node_modules/minilog/dist/minilog.js dist/dummy > dist/cato.js
 	@rm dist/dummy
 
 .PHONY: build test

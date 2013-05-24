@@ -1,10 +1,10 @@
 var util = require('util'),
     assert = require('assert'),
     $ = require('../lib/shim.js'),
-    ShimUtil = require('../lib/shim.util.js'),
+    ShimUtil = require('../lib/common/shim.util.js'),
     toHTML = require('htmlparser-to-html'),
     PlaceholderView = require('./lib/placeholder.js'),
-    Outlet = require('vjs2').Outlet;
+    Outlet = require('cato').Outlet;
 
 var pretty = require('html').prettyPrint;
 
