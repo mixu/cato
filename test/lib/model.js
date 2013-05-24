@@ -16,6 +16,13 @@ DummyModel.prototype.set = function(k, v) {
 
 DummyModel.prototype.get = function(k) {
   return this._data[k];
-}
+};
+
+DummyModel.mixin = function(dest) {
+  var o = DummyModel.prototype, k;
+  for (k in o) {
+    o.hasOwnProperty(k) && (dest.prototype[k] = o[k]);
+  }
+};
 
 module.exports = DummyModel;

@@ -2,12 +2,13 @@
   "name": "vjs2",
   "version": "0.0.0",
   "description": "- value binding - model binding - collection",
-  "main": "sample.js",
+  "main": "lib/index.js",
   "directories": {
+    "lib": "lib",
     "example": "examples"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "make test"
   },
   "repository": {
     "type": "git",
