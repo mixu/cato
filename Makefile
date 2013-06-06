@@ -33,4 +33,17 @@ endif
 	@cat dist/cato.js > dist/dummy; $ cat node_modules/minilog/dist/minilog.js dist/dummy > dist/cato.js
 	@rm dist/dummy
 
+build-no-minilog:
+	@mkdir -p ./dist/
+	@echo 'Building dist/cato.js'
+	@./node_modules/gluejs/bin/gluejs \
+	--include ./lib/common \
+	--include ./lib/web \
+	--replace jQuery=window.jQuery,minilog=window.Minilog \
+	--include ./node_modules/microee \
+	--include ./node_modules/htmlparser-to-html \
+	--global Cato \
+	--main lib/web/index.js \
+	--out dist/cato.js
+
 .PHONY: build test
