@@ -18,25 +18,6 @@ build:
 	@mkdir -p ./dist/
 	@echo 'Building dist/cato.js'
 	@./node_modules/gluejs/bin/gluejs \
-	--include ./lib/common ./lib/web \
-	--replace jQuery=window.jQuery,minilog=window.Minilog \
-	--npm microee,htmlparser-to-html \
-	--global Cato \
-	--main lib/web/index.js \
-	--out dist/cato.js
-ifeq ($(UNAME), Linux)
-	@sed -i 's/..\/shim.js/..\/shim.web.js/g' dist/cato.js
-endif
-ifeq ($(UNAME), Darwin)
-	@sed -i '' 's/..\/shim.js/..\/shim.web.js/g' dist/cato.js
-endif
-	@cat dist/cato.js > dist/dummy; $ cat node_modules/minilog/dist/minilog.js dist/dummy > dist/cato.js
-	@rm dist/dummy
-
-build-no-minilog:
-	@mkdir -p ./dist/
-	@echo 'Building dist/cato.js'
-	@./node_modules/gluejs/bin/gluejs \
 	--include ./lib/common \
 	--include ./lib/web \
 	--replace jQuery=window.jQuery,minilog=window.Minilog \
