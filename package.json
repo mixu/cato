@@ -21,8 +21,8 @@
     "microee": "~0.0.2",
     "gluejs": "git://github.com/mixu/gluejs.git#glue2",
     "htmlparser": "~1.7.6",
-    "htmlparser-to-html": "~0.0.2",
-    "minilog": "~0.1.0"
+    "htmlparser-to-html": "~0.0.4",
+    "minilog": "git://github.com/mixu/minilog.git#master"
   },
   "devDependencies": {
     "html": "0.0.7"

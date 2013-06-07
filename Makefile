@@ -23,6 +23,7 @@ build:
 	--replace jQuery=window.jQuery,minilog=window.Minilog \
 	--include ./node_modules/microee \
 	--include ./node_modules/htmlparser-to-html \
+	--command 'uglifyjs --no-copyright --mangle-toplevel' \
 	--global Cato \
 	--main lib/web/index.js \
 	--out dist/cato.js
