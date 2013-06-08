@@ -95,7 +95,7 @@ exports['model bindings'] = {
   'function with model listeners': function() {
     var evalCount = 0,
        view = $.viewify('div', {}, function(foo) {
-        console.log('eval', foo);
+        // console.log('eval', foo);
         evalCount++;
         return 'The value is ' + foo;
       }),
@@ -118,11 +118,11 @@ exports['model bindings'] = {
     }));
 
     assert.equal($.html($.get('body')), '<html><div id="1">The value is Foo</div></html>');
-    console.log($.html($.get('body')));
+    // console.log($.html($.get('body')));
     model.set('foo', 'Bar');
-    console.log($.html($.get('body')));
+    // console.log($.html($.get('body')));
     assert.equal($.html($.get('body')), '<html><div id="1">The value is Bar</div></html>');
-    console.log(bindCalls, viewEvents, listenerCalls);
+    // console.log(bindCalls, viewEvents, listenerCalls);
   },
 
 
@@ -195,7 +195,9 @@ exports['model bindings'] = {
     // attach to DOM
     $('body').update(view);
     result = $.html($.get('body'));
+
     assert.ok(/.*Hello Coder Cat.*/.test(result));
+    assert.ok(/.*span class="Cat".*/.test(result));
 
     // the key is - are the event listeners working correctly?
 
@@ -203,6 +205,7 @@ exports['model bindings'] = {
     model.set('surname', 'Partycat');
     result = $.html($.get('body'));
     assert.ok(/.*Hello Hipster Partycat.*/.test(result));
+    assert.ok(/.*span class="Partycat".*/.test(result));
 
   },
 
