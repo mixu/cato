@@ -1,8 +1,9 @@
-TESTS += test/shim.util.test.js
+TESTS += test/collection_view.test.js
 TESTS += test/event.test.js
+TESTS += test/model_binding.test.js
+TESTS += test/shim.util.test.js
 TESTS += test/unirender.test.js
 TESTS += test/viewify.test.js
-TESTS += test/model_binding.test.js
 
 UNAME := $(shell uname)
 
@@ -38,7 +39,6 @@ build-debug:
 	--include ./node_modules/microee \
 	--include ./node_modules/htmlparser-to-html \
 	--command 'uglifyjs --no-copyright --beautify' \
-	--source-url \
 	--global Cato \
 	--main lib/web/index.js \
 	--out dist/cato.js
