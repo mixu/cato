@@ -6,7 +6,7 @@ var assert = require('assert'),
     $ = require('cato').Shim,
     Collection = require('cato').Collection,
     CollectionView = require('cato').CollectionView,
-    DummyModel = require('./lib/model.js'),
+    Model = require('backbone').Model,
     NameOnlyRow = require('./lib/name_only_row.js');
 
 /*
@@ -42,7 +42,7 @@ exports['given a collection'] = {
     var tableView = new TableView(),
         table = new Collection([
           { name: 'Project Vega', records: 4834,  last_modified: new Date() }
-        ], { model: DummyModel });
+        ], { model: Model });
 
     // render before piping
     // 0) Can render the collection (empty)
@@ -57,10 +57,13 @@ exports['given a collection'] = {
     assert.equal($.html(tableView), '<ul id="1"><li>Header</li><li id="2">Project Vega</li><li id="3">Project Foo</li></ul>');
 
     // 2) Changing an element property should be reflected in the view
-    table.get(1).set('name', 'Project Bar');
+    table.at(1).set('name', 'Project Bar');
     assert.equal($.html(tableView), '<ul id="1"><li>Header</li><li id="2">Project Vega</li><li id="3">Project Bar</li></ul>');
 
     // 3) Removing an element from the collection should be reflected in the view
+    table.remove(table.at(1));
+    // console.log($.html(tableView));
+    assert.equal($.html(tableView), '<ul id="1"><li>Header</li><li id="2">Project Vega</li></ul>');
     // 4) Resetting the collection should reset the view
   },
 
@@ -89,7 +92,7 @@ exports['given a collection'] = {
     var tableView = new TableView(),
         table = new Collection([
           { name: 'Project Vega', records: 4834,  last_modified: new Date() }
-        ], { model: DummyModel });
+        ], { model: Model });
 
     // render before piping
     // 0) Can render the collection (empty)
@@ -102,7 +105,7 @@ exports['given a collection'] = {
     table.add({name: 'Project Foo', records: 123,  last_modified: new Date() });
     assert.equal($.html(tableView), '<section id="5"><p>Header</p><ul id="4"><li id="6">Project Vega</li><li id="7">Project Foo</li></ul><div>Footer</div></section>');
     // 2) Changing an element property should be reflected in the view
-    table.get(1).set('name', 'Project Bar');
+    table.at(1).set('name', 'Project Bar');
     assert.equal($.html(tableView), '<section id="5"><p>Header</p><ul id="4"><li id="6">Project Vega</li><li id="7">Project Bar</li></ul><div>Footer</div></section>');
 
   }

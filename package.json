@@ -25,6 +25,7 @@
     "minilog": "git://github.com/mixu/minilog.git#master"
   },
   "devDependencies": {
-    "html": "0.0.7"
+    "html": "0.0.7",
+    "backbone": "~1.0.0"
   }
 }
