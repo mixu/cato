@@ -3,33 +3,1097 @@ require.m = [];
 require.m[0] = {
 "jQuery": { exports: window.jQuery },
 "minilog": { exports: window.Minilog },
+"backbone": { exports: window.Backbone },
 "lib/web/shim.js": function(module, exports, require){
-function o(e){if(!(this instanceof arguments.callee))return new o(e);this.expr=e}function u(e){var t=e.toString();return t.slice(t.indexOf("(")+1,t.indexOf(")")).match(/([^\s,]+)/g)}var e=require("jQuery"),t=require("htmlparser-to-html"),n=require("../common/shim.util.js"),r=require("minilog")("cato/shim");r.suggest.deny("cato/shim","warn");var i=1,s={};o._reset=function(){i=1,s={}},o.id=function(e){if(isNaN(e))return"s"+i++;var t=[];while(e>0)t.push("s"+i++),e--;return t},o.get=o.prototype.get=function(t){return typeof t!="string"?t:e("#"+t)},o.prototype.prop=function(e,t){this.get(this.expr).prop(e,t)},o.prototype.attr=function(e,t){if(e=="value"&&this.get(this.expr).is(":focus"))return;this.get(this.expr).attr(e,t)},o.prototype.toggle=function(e){this.get(this.expr).toggle(e)},o.prototype.on=function(e,t){this.get(this.expr).on(e,t)},o.prototype.addClass=function(e){this.get(this.expr).addClass(e)},o.prototype.removeClass=function(e){this.get(this.expr).removeClass(e)},o.tag=n.tag,o.viewify=function(e,t,n){var r=require("../common/view.js"),i=new r;return i._render=function(){return t||(t={}),t.id||(t.id=o.id()),i.id=t.id,o.tag("div",t,n)},i},o.prototype.update=function(e){var t=this;o._detach(this.expr,"...?"),o._attach(this.expr,e,function(e){r.info(t.expr,"update",e),t.get(t.expr).html(e)})},o.prototype.append=function(e){var t=this;o._attach(this.expr,e,function(e){r.info(t.expr,"append",e),t.get(t.expr).append(e)})},o.prototype.before=function(e){var t=this;o._attach(this.expr,e,function(e){r.info(t.expr,"before",e),t.get(t.expr).before(e)})},o.prototype.remove=function(){this.get(this.expr).remove()},o._html=function(e){return o._attach(e,function(){})},o._detach=function(e,t){var n=o.get(e);parentView=s[e],parentView&&delete e._renderCache},o._attach=function(e,i,a){if(typeof i=="string")return a(i),i;var f=undefined,l=undefined;e&&(f=o.get(e),l=s[e]);var c,h=[],p=[],d=[];n.dfsTraverse(i,f,l,function(e,t,n,i){t&&(!i||i===l)&&(h.push(t),t.parent=null,p.push(function(){t.attach()})),t&&i&&(t.parent=i,i.children||(i.children=[]),i.children.push(t)),e.children&&(Array.isArray(e.children)?e.children:[e.children]).forEach(function(n,s){if(typeof n=="function"){var a=u(n);if(!a){e.children[s]={type:"text",data:n()};return}e.attribs||(e.attribs={}),e.attribs.id||(e.attribs.id=o.id()),e.children[s]={type:"text",data:n.apply(t||i,a.map(function(e){return(t||i).model.get(e)}))},a.forEach(function(s){(t||i).listenTo((t||i).model,"change:"+s,function(u,f,l){r.info("UPDATE","change:"+s,f),(new o(e.attribs.id)).update(n.apply(t||i,a.map(function(e){return(t||i).model.get(e)})))})})}}),e.attribs&&Object.keys(e.attribs).forEach(function(n){var s=e.attribs[n];if(typeof s=="function"){e.attribs.id||(e.attribs.id=o.id());var a=u(s);if(n.substr(0,2).toLowerCase()=="on"){(t||i).once("attach",function(){(t||i).listenDom(n.substr(2).toLowerCase()+" #"+e.attribs.id,s)}),delete e.attribs[n];return}if(!a){e.attribs[n]=s();return}e.attribs[n]=s.apply(t||i,a.map(function(e){return(t||i).model.get(e)})),a.forEach(function(u){(t||i).listenTo((t||i).model,"change:"+u,function(u,f,l){var c=s.apply(t||i,a.map(function(e){return(t||i).model.get(e)}));r.info("set attr value","change:"+n,'$("'+e.attribs.id+'").attr("'+n+'", '+c+");"),o.get(e.attribs.id).attr(n,c)})})}}),t&&(t.id&&(s[t.id]=t),e.attribs&&e.attribs.id&&(s[e.attribs.id]=t)),(!n||n===f)&&d.push(e)}),c=t(d,null,function(e){if(e.render){if(e._renderCache)return e._renderCache;var t=e.render();return e.id&&(s[e.id]=e),t.attribs&&t.attribs.id&&(s[t.attribs.id]=e),t}return e}),a(c);for(var v=0;v<p.length;v++)p[v]();return h.length==0&&l&&l.emit("attach"),c},module.exports=o;},
+var $ = require('jQuery'),
+    toHTML = require('htmlparser-to-html'),
+    ShimUtil = require('../common/shim.util.js'),
+    log = require('minilog')('cato/shim');
+
+// default log level >= warn
+log.suggest.deny('cato/shim', 'info');
+
+var counter = 1,
+    viewById = {};
+
+function Shim(expr) {
+  if (!(this instanceof arguments.callee)) {
+    return new Shim(expr);
+  }
+  this.expr = expr;
+}
+
+Shim._reset = function() {
+  counter = 1;
+  viewById = {};
+};
+
+// generate one or more unique element ids
+Shim.id = function(count) {
+  if(isNaN(count)) return 's'+counter++;
+  var result = [];
+  while(count > 0) {
+    result.push('s'+counter++);
+    count--;
+  }
+  return result;
+};
+
+// fetch a element from the DOM
+Shim.get = Shim.prototype.get = function(token) {
+  if(typeof token !== 'string') {
+    return token;
+  }
+  return $('#'+token);
+};
+
+// property values (e.g. disabled, checked...)
+Shim.prototype.prop = function(name, value) {
+  this.get(this.expr).prop(name, value);
+};
+
+Shim.prototype.attr = function(name, value) {
+  // we will not set the value of the currently focused element to prevent losing the state of the caret
+  // if(name == 'value' && this.get(this.expr).is(':focus')) return;
+  this.get(this.expr).attr(name, value);
+};
+
+Shim.prototype.toggle = function(value) {
+  this.get(this.expr).toggle(value);
+};
+
+Shim.prototype.on = function(event, callback) {
+  this.get(this.expr).on(event, callback);
+};
+
+Shim.prototype.addClass = function(value) {
+  this.get(this.expr).addClass(value);
+};
+
+Shim.prototype.removeClass = function(value) {
+  this.get(this.expr).removeClass(value);
+};
+
+Shim.tag = ShimUtil.tag;
+Shim.viewify = function(tagName, attributes, value) {
+  // awkward circular dependency on View
+  var View = require('../common/view.js'),
+      // create a View instance
+      result = new View();
+
+  // generate a ._render() function
+  result._render = function() {
+    if(!attributes) attributes = {};
+    if(!attributes.id) attributes.id = Shim.id();
+    result.id = attributes.id;
+    return Shim.tag('div', attributes, value);
+  };
+  return result;
+};
+
+
+// replace the inner content of a HTML element
+Shim.prototype.update = function(value) {
+  var self = this;
+
+  // TODO: emit "destroy" events etc.
+  Shim._detach(this.expr, '...?');
+  Shim._attach(this.expr, value, function(txt){
+    log.info(self.expr, 'update', txt);
+    self.get(self.expr).html(txt);
+  });
+};
+
+// attach as the last child
+Shim.prototype.append = function(value) {
+  var self = this;
+  Shim._attach(this.expr, value, function(txt){
+    log.info(self.expr, 'append', txt);
+    self.get(self.expr).append(txt);
+  });
+};
+
+// attach as a sibling just before
+Shim.prototype.before = function(value) {
+  var self = this;
+  Shim._attach(this.expr, value, function(txt){
+    log.info(self.expr, 'before', txt);
+    self.get(self.expr).before(txt);
+  });
+};
+
+Shim.prototype.remove = function() {
+  this.get(this.expr).remove();
+};
+
+function getParamNames(func) {
+  var funStr = func.toString();
+  return funStr.slice(funStr.indexOf('(')+1, funStr.indexOf(')')).match(/([^\s,]+)/g);
+}
+
+// Convert a tree into HTML without attaching it to the DOM
+Shim._html = function(tree) {
+  return Shim._attach(tree, function() {});
+};
+
+// destructive DOM manipulations such as `update()` call this to clean up the DOM
+// before replacing into an element
+Shim._detach = function(parent, elements) {
+  var parentTag = Shim.get(parent);
+      parentView = viewById[parent];
+
+  if(parentView) {
+    // empty the _renderCache
+    delete parent._renderCache;
+  }
+};
+
+// like .html(), except rather than returning a value,
+// this converts the content to html and triggers .attach() on the content
+Shim._attach = function(parent, tree, task) {
+  // Note: the tree can also be a piece of HTML, so check and handle correctly
+  if (typeof tree === 'string') {
+    // no need to walk the structure, as HTML strings cannot contain views etc.
+    task(tree);
+    // DOM: jQuery can handle strings so we can return them directly
+    return tree;
+  }
+
+  // This can be called at two different points in time:
+  // 1. the first time, passing a root level element such as body
+  //   => we need to do a full traversal, and do not need to worry about elements already existing
+  // 2. incrementally, passing a element reference or element selector id that already exists
+  //   => we need to recover the parentview and parentTag values and then do a walk of the new subtree
+  //   => if the operation is destructive, we need to call all appropriate destroy etc. calls in the discarded tree
+
+  // Parent is one of: null or an id (TODO: HTML element)
+  // Find out if the parent exists - if it does, set the parentView and parentTag values in dfsTraverse
+  var origParentTag = undefined, origParentView = undefined;
+  if(parent) {
+    origParentTag = Shim.get(parent);
+    origParentView = viewById[parent];
+  }
+
+  // perform a view-axis tree walk, and collect an annotated tag-axis tree
+  // 1. trees with a single root:
+  // e.g. View( [ text, view, outlet ] )
+  // 2. arrays with one or more trees
+  // e.g [ text, View([ outlet ]), outlet ]
+  var html,
+      roots = [],
+      delayed = [],
+      rootTags = [];
+  // note: the dfs traversal tracks the parent tag and parent view separately
+  // note: no need to return anything - you can directy annotate the parent
+  ShimUtil.dfsTraverse(tree, origParentTag, origParentView, function(tag, view, parentTag, parentView) {
+    // Task 1: find the root views (to emit "attach")
+    if(view && (!parentView || parentView === origParentView)) {
+      // this is a root
+      roots.push(view);
+      view.parent = null;
+      delayed.push(function() {
+        // notify each of the tree roots that they have been attached to the DOM
+        view.attach();
+      });
+    }
+    // Task 2: connect each **view** to it's parent and each parent to it's children
+    if(view && parentView) {
+      // assign the parent relationship
+      view.parent = parentView;
+      // assign the child relationship (???)
+      if(!parentView.children) {
+        parentView.children = [];
+      }
+      parentView.children.push(view);
+    }
+    // Task 3: convert bindings on tag values and tag attributes, using information about the parent view to help
+    // Note: any modifications done on the tag is persistent, due to the fact that all structures are cached
+    // (for views, via _renderCache, for unrooted HTML via the rootTags array in this function)
+
+    // it's probably best to just look into tag.children directly here rather than waiting for the function to
+    // be iterated over in the next step of the dfs.
+    // that way, one can always accurately trace the index of the function
+    // -- if this were done when accessing the child, then we know what the parent is but not the index of
+    // the child in the ._renderCache structure (which is always enclosed by the tag itself)
+    if(tag.children) {
+      (Array.isArray(tag.children) ? tag.children : [tag.children]).forEach(function(child, index) {
+        if(typeof child == 'function') {
+          // check if the item is a function (= content binding on the parent)
+          // parse the function - retrieve the count and names of the parameters
+          var paramNames = getParamNames(child);
+          if(!paramNames) {
+            // if there are no params, then just run the function once - it never changes
+            tag.children[index] = { type: 'text', data: child() };
+            return;
+          }
+          // if it has a binding - it should have an attribs.id
+          (tag.attribs) || (tag.attribs = {});
+          (tag.attribs.id) || (tag.attribs.id = Shim.id());
+          // if there are params, take each of those and permanently replace it with the fixed value
+          tag.children[index] = {
+            type: 'text',
+            data: child.apply(view || parentView, paramNames.map(function(key) { return (view || parentView).model.get(key); }))
+          };
+          // and add a .listenTo(target, event, fn) to the current view || parent view of the tag
+          paramNames.forEach(function(key) {
+            (view || parentView).listenTo((view || parentView).model, 'change:'+key, function(model, value, options) {
+              log.info('Update DOM content id=', tag.attribs.id, 'change:'+key, value);
+              // update the DOM element
+              new Shim(tag.attribs.id).update(
+                child.apply(view || parentView,
+                            paramNames.map(function(key) {
+                              // note: need to use the model from the event
+                              // otherwise we'll always use the model set in the view or the parent view
+                              return model.get(key);
+                            })));
+            });
+          });
+        }
+      });
+    }
+    // and/or if the tag has an attribute that is a function (= attribute binding on the item)
+    if(tag.attribs) {
+      // check all attribs
+      Object.keys(tag.attribs).forEach(function(key) {
+        var fn = tag.attribs[key];
+        if(typeof fn == 'function') {
+          // if it has a binding - it should have an attribs.id
+          (tag.attribs.id) || (tag.attribs.id = Shim.id());
+          // parse the function - retrieve the count and names of the parameters
+          var paramNames = getParamNames(fn);
+          // is this a onX attribute?
+          if(key.substr(0, 2).toLowerCase() == 'on') {
+            // generate a selector => $(item.id) should work (todo: where does it not work?)
+            // always add a .listenDom(selector, fn)
+            // note: DOM listeners must always be delayed until "attach"
+            (view || parentView).once('attach', function() {
+              (view || parentView).listenDom(key.substr(2).toLowerCase()+' #'+tag.attribs.id, fn);
+            });
+            // delete the function itself from the render cache
+            delete tag.attribs[key];
+            // todo: assuming for now that onX functions are not also triggered by model change events
+            return;
+          }
+          // regular attribute
+          if(!paramNames) {
+            // if there are no params, then just run the function once - it never changes
+            tag.attribs[key] = fn();
+            return;
+          }
+          // if there are params, take each of those and permanently replace it with the fixed value
+          tag.attribs[key] = fn.apply(view || parentView, paramNames.map(function(key) { return (view || parentView).model.get(key); }));
+          // and add a .listenTo(target, event, fn) to the current view || parent view of the tag
+          paramNames.forEach(function(modelKey) {
+            (view || parentView).listenTo((view || parentView).model, 'change:'+modelKey, function(model, value, options) {
+              // set the DOM element attribute
+              var result = fn.apply(view || parentView, paramNames.map(function(modelKey) {
+                // note: need to use the model from the event
+                // otherwise we'll always use the model set in the view or the parent view
+                return model.get(modelKey);
+              }));
+              log.info('set attr value', 'change:'+modelKey, '$("'+tag.attribs.id+'").attr("'+key+'", '+result+');');
+              new Shim(tag.attribs.id).attr(key, result);
+            });
+          });
+        }
+      });
+    }
+    // Task 4: update the emulated DOM (SKIP)
+
+    if(view) {
+      if(view.id) {
+        viewById[view.id] = view;
+      }
+      if(tag.attribs && tag.attribs.id) {
+        viewById[tag.attribs.id] = view;
+      }
+    }
+
+    // Task 5: collect the complete, annotated HTML (the item.render part is done in the tree walker)
+    // this is actually really easy: collect the root tags into an array. That array is renderable as HTML,
+    // as long as you redirect any renderables to use the _renderCache instead
+    if(!parentTag || (parentTag === origParentTag)) {
+      // no parent == root tag
+      rootTags.push(tag);
+    }
+  });
+
+  // Task 6: convert the collected tag-only tree into HTML
+
+  // in Node, we just walk the tree - producing HTML here is not necessary
+  html = toHTML(rootTags, null, function(item) {
+      if(item.render) {
+        if(item._renderCache) {
+          return item._renderCache;
+        } else {
+          var result = item.render();
+          // if we have not rendered yet, then do it now -- and update the tagById!!
+          if(item.id) {
+            viewById[item.id] = item;
+          }
+          if(result.attribs && result.attribs.id) {
+            viewById[result.attribs.id] = item;
+          }
+          return result;
+        }
+      }
+      return item;
+    });
+
+  task(html);
+
+  // run delayed tasks now that the element tree is in the DOM
+  for(var i = 0; i < delayed.length; i++) {
+    delayed[i]();
+  }
+
+  // this fixes the case where an incremental update is made, which just contains tags,
+  // so no "attach" events are emitted since there is no root view.
+  // the attach listeners are on parentView in this case, so call it.
+  if(roots.length == 0 && origParentView) {
+    origParentView.emit('attach');
+  }
+
+  // return html (so that this can also be used for ".html")
+  return html;
+};
+
+module.exports = Shim;
+},
 "lib/web/index.js": function(module, exports, require){
-module.exports={Collection:require("../common/collection.js"),View:require("../common/view.js"),CollectionView:require("../common/collection_view.js"),Shim:require("./shim.js"),Outlet:require("../common/outlet.js"),Microee:require("microee")};},
+module.exports = {
+  Collection: require('../common/collection.js'),
+  View: require('../common/view.js'),
+  CollectionView: require('../common/collection_view.js'),
+  Shim: require('./shim.js'),
+  Outlet: require('../common/outlet.js'),
+  Microee: require('microee')
+};
+},
 "lib/common/view.js": function(module, exports, require){
-function s(){this._state=r.initial,this._renderCache=null}var e=require("microee"),t=typeof window!="undefined"?require("../web/shim.js"):require("../shim.js"),n=require("minilog")("cato/view");n.suggest.deny("cato/view","warn");var r={initial:1,rendered:2,attached:3,bound:4},i=/^(\S+)\s*(.*)$/;e.mixin(s),s.prototype.bind=function(e){this.model=e},s.prototype.render=function(){return this._renderCache||(this._renderCache=this._render(),this.id||(this.id=t.id()),this._renderCache.attrib&&!this._renderCache.attrib.id&&(this._renderCache.attrib.id=this.id)),this.emit("render"),this._renderCache},s.prototype.toggle=function(e,n){this.id&&t(this.id).toggle(e),this.emit(e?"show":"hide",n)},s.prototype.attach=function(){var e=this;this.emit("attach"),this.on("destroy",function(){}),this.children&&Array.isArray(this.children)&&this.children.forEach(function(e){e.attach()})},s.prototype.listenTo=function(e,t,r){var i=this;return e.on(t,r),this.when("unbind",function(n){return!n||n==e?(e.removeListener&&e.removeListener(t,r),e.off&&e.off(t,r),!0):!1}),this.once("rebind",function(e,n){i.emit("unbind",e),i.listenTo(n,t,r)}),n.info("listenTo",e,t,r),this},s.prototype.listenDom=function(e,t){var r=e.match(i),s=r[1]+".delegateEvents"+this.id,e=r[2];return typeof jQuery!="undefined"&&(e===""?(jQuery("#"+this.id).on(s,t),n.info("listenDom","jQuery(#"+this.id+").on("+s+", callback)")):(jQuery(e).on(s,t),n.info("listenDom","jQuery("+e+").on("+s+", callback)"))),this},s.prototype.destroy=function(){this.emit("unbind"),this.emit("destroy"),this.children&&Array.isArray(this.children)&&this.children.forEach(function(e){e.destroy()})},s.mixin=function(e){var t;for(t in this.prototype)this.prototype.hasOwnProperty(t)&&(e.prototype[t]=this.prototype[t])},module.exports=s;},
+var microee = require('microee'),
+    $ = (typeof window != 'undefined' ? require('../web/shim.js') : require('../shim.js')),
+    log = require('minilog')('cato/view');
+
+// default log level >= info
+log.suggest.deny('cato/view', 'info');
+
+var states = {
+  initial: 1,  // = destroyed (unbound)
+  rendered: 2, // = detached from DOM
+  attached: 3, // = unbound DOM events
+  bound: 4
+};
+
+var delegateEventSplitter = /^(\S+)\s*(.*)$/;
+
+function View() {
+  this._state = states.initial;
+  this._renderCache = null;
+}
+
+microee.mixin(View);
+
+View.prototype.bind = function(model) {
+  this.model = model;
+  // establish subscriptions from the model change events to the value bindings (in the DOM)
+  // and any wildcard event handlers for the model
+};
+
+// ._render() is implemented by each subclass
+View.prototype.render = function() {
+  if(!this._renderCache) {
+    this._renderCache = this._render();
+    // check that render has produced an id
+    if(!this.id) {
+      this.id = $.id();
+    }
+    // check that the top level item -- if it is a tag -- has an id element
+    if(this._renderCache.attrib && !this._renderCache.attrib.id) {
+      this._renderCache.attrib.id = this.id;
+    }
+  }
+  this.emit('render');
+  return this._renderCache;
+};
+
+View.prototype.toggle = function(visible, context) {
+  this.id && $(this.id).toggle(visible);
+  this.emit(visible ? 'show' : 'hide', context);
+};
+
+// notify that this view has been attached onto the DOM
+View.prototype.attach = function() {
+  var self = this;
+  // emit on this view
+  this.emit('attach');
+
+  // detach DOM events on destroy - better place(?)
+  this.once('destroy', function() {
+    // $.off('.delegateEvents' + self.id);
+  });
+
+  // emit on all items in the children array
+  if(this.children && Array.isArray(this.children)) {
+    this.children.forEach(function(child) {
+      child.attach();
+    });
+  }
+};
+
+// when the current view is removed/destroyed, make sure that event callbacks set on
+// a remaining target are cleaned up
+View.prototype.listenTo = function(target, eventName, callback) {
+  var self = this;
+  target.on(eventName, callback);
+  this.when('unbind', function(model) {
+    if(!model || model == target)  {
+      // Fixme: this is caused by the fact that BB uses .off() while Node uses .removeListener()
+      if(target.removeListener) {
+        target.removeListener(eventName, callback);
+      }
+      if(target.off) {
+        target.off(eventName, callback);
+      }
+      return true; // remove callback
+    }
+    return false;
+  });
+  this.once('rebind', function(from, to) {
+    log.info('rebinding '+eventName+' from', from, 'to', to);
+    self.emit('unbind', from);
+    self.listenTo(to, eventName, callback);
+  });
+  log.info('listenTo', target, eventName);
+  return this;
+};
+
+// when the current view is removed/destroyed,
+// clean up this DOM listener (via .off with a custom namespace)
+View.prototype.listenDom = function(selector, callback) {
+  var match = selector.match(delegateEventSplitter),
+      eventName = match[1] + '.delegateEvents' + this.id,
+      selector = match[2];
+
+  if(typeof jQuery != 'undefined') {
+    if (selector === '') {
+      jQuery('#' + this.id).on(eventName, callback);
+      log.info('listenDom', "jQuery(#"+ this.id+").on("+eventName+")", callback);
+    } else {
+      jQuery(selector).on(eventName, callback);
+      log.info('listenDom', "jQuery("+ selector+").on("+eventName+")", callback);
+    }
+  }
+  return this;
+};
+
+// notify the view that it is being destroyed
+View.prototype.destroy = function() {
+  // remove from DOM
+  $(this.id).remove();
+
+  // emit on this view
+  this.emit('unbind');
+  this.emit('destroy');
+  // emit on all items in the children array
+  if(this.children && Array.isArray(this.children)) {
+    this.children.forEach(function(child) {
+      child && child.destroy && child.destroy();
+    });
+  }
+};
+
+View.mixin = function(dest) {
+  var k;
+  for (k in this.prototype) {
+    this.prototype.hasOwnProperty(k) && (dest.prototype[k] = this.prototype[k]);
+  }
+};
+
+module.exports = View;
+},
 "lib/common/outlet.js": function(module, exports, require){
-function r(t,n,r){this.tagName=t||"div",n||(n={}),n.id||(n.id=e.id()),this.id=n.id,this.attributes=n,this.tagContent=r||"",this.reset()}var e=typeof window!="undefined"?require("../web/shim.js"):require("../shim.js"),t=require("microee"),n={initial:1,rendered:2,attached:3,bound:4};t.mixin(r),r.prototype.render=function(){return this._state>=n.rendered?this._renderCache:(this._state=n.rendered,this._renderCache=e.tag(this.tagName,this.attributes,this.tagContent),this.emit("render"),this._renderCache)},r.prototype.ensureElement=function(){this._state<n.rendered&&this.render()},r.prototype.add=function(t,n){this.ensureElement();var r=n&&n.at?n.at:this._contents.length;this._contents.length==0||r==this._contents.length?e(this.id).append(t):e(this._contents[r].id).before(t),this._contents.splice(r,0,t)},r.prototype.remove=function(e,t){var n=this._contents.indexOf(e);n!=-1&&(this._contents[n].destroy(),delete this._contents[n])},r.prototype.reset=function(){this.length=0,this._contents=[],this._state=n.initial,this._renderCache=null},r.prototype.at=function(e){return this._contents[e]},r.prototype.show=function(t,n){arguments.length>0&&this._contents[t]?(this._contents[t].toggle?this._contents[t]:e(this._contents[t].id)).toggle(!0,n):e(this.id).toggle(!0)},r.prototype.hide=function(t,n){arguments.length>0&&this._contents[t]?(this._contents[t].toggle?this._contents[t]:e(this._contents[t].id)).toggle(!1,n):e(this.id).toggle(!1)},["filter","forEach","every","map","some"].forEach(function(e){r.prototype[e]=function(){return Array.prototype[e].apply(this._contents,arguments)}}),r.prototype.toggle=function(t){e(this.id).toggle(t)},r.prototype.attach=function(){this.emit("attach"),this.children&&Array.isArray(this.children)&&this.children.forEach(function(e){e.attach()})},r.mixin=function(e){var t;for(t in this.prototype)this.prototype.hasOwnProperty(t)&&(e.prototype[t]=this.prototype[t]);e.mixin=this.mixin},module.exports=r;},
+var $ = (typeof window != 'undefined' ? require('../web/shim.js') : require('../shim.js')),
+    microee = require('microee');
+
+
+/*
+  Outlet is a base type representing an array of views.
+
+- .add(models, [options]) / .remove(models, [options]): also, sugared forms (push/pop/unshift/shift)
+- .reset()
+- .at(index)
+- .show() / .hide(): takes all the contained views and the top level element, and shows/hides them
+*/
+
+var states = {
+  initial: 1,  // = destroyed (unbound)
+  rendered: 2, // = detached from DOM
+  attached: 3, // = unbound DOM events
+  bound: 4
+};
+
+
+// A DOM-aware, renderable array of views with a wrapping element
+function Outlet(tagName, attributes, content) {
+  this.tagName = tagName || 'div';
+  if(!attributes) attributes = {};
+  if(!attributes.id) attributes.id = $.id();
+  this.id = attributes.id;
+  this.attributes = attributes;
+  this.tagContent = content || '';
+  this.reset();
+}
+
+microee.mixin(Outlet);
+
+// Render returns DOM elements (or their local equivalent)
+Outlet.prototype.render = function() {
+  // console.log('outlet render', this._state);
+  // if rendered, just return the element
+  if(this._state >= states.rendered) {
+    return this._renderCache;
+  }
+  // set to rendered
+  this._state = states.rendered;
+  this._renderCache = $.tag(this.tagName, this.attributes, this.tagContent);
+  this.emit('render');
+  return this._renderCache;
+};
+
+Outlet.prototype.ensureElement = function() {
+  if(this._state < states.rendered) {
+    // must be rendered before being bound
+    this.render();
+  }
+};
+
+Outlet.prototype.add = function(view, options) {
+  this.ensureElement();
+
+  var index = (options && options.at ? options.at : this._contents.length);
+  // render + append the view to the DOM
+  if(this._contents.length == 0 || index == this._contents.length) {
+    // the first insert, and inserting at the last position both need to use .append
+    $(this.id).append(view);
+  } else {
+    $(this._contents[index].id).before(view);
+  }
+
+  // then add view to the contents
+  this._contents.splice(index, 0, view);
+};
+
+Outlet.prototype.remove = function(view, options) {
+  var index = this._contents.indexOf(view);
+  if(index != -1) {
+    // clean up view
+    this._contents[index].destroy();
+    // remove reference to view
+    delete this._contents[index];
+  }
+};
+
+Outlet.prototype.reset = function() {
+  this.length = 0;
+  this._contents = [];
+  this._state = states.initial;
+  // reference to the DOM fragment object for this view
+  this._renderCache = null;
+};
+
+Outlet.prototype.at = function(index) {
+  return this._contents[index];
+};
+
+// index is optional
+Outlet.prototype.show = function(index, context) {
+  if(arguments.length > 0 && this._contents[index]) {
+    // call the method if it exists - otherwise toggle the div (todo: should this be supported?)
+    (this._contents[index].toggle ?
+      this._contents[index]
+      : $(this._contents[index].id)).toggle(true, context);
+  } else {
+    $(this.id).toggle(true);
+  }
+};
+
+// index is optional
+Outlet.prototype.hide = function(index, context) {
+  if(arguments.length > 0 && this._contents[index]) {
+    (this._contents[index].toggle ?
+      this._contents[index]
+      : $(this._contents[index].id)).toggle(false, context);
+  } else {
+    $(this.id).toggle(false);
+  }
+};
+
+['filter', 'forEach', 'every', 'map', 'some'].forEach(function(name) {
+  Outlet.prototype[name] = function() {
+    return Array.prototype[name].apply(this._contents, arguments);
+  }
+});
+
+// part of the uniform view interface (e.g. a renderable is togglable)
+Outlet.prototype.toggle = function(visible) {
+  $(this.id).toggle(visible);
+};
+
+// notify that this view has been attached onto the DOM
+Outlet.prototype.attach = function() {
+  // emit on this view
+  this.emit('attach');
+  // emit on all items in the children array
+  if(this.children && Array.isArray(this.children)) {
+    this.children.forEach(function(child) {
+      child.attach();
+    });
+  }
+};
+
+Outlet.mixin = function(dest) {
+  var k;
+  for (k in this.prototype) {
+    this.prototype.hasOwnProperty(k) && (dest.prototype[k] = this.prototype[k]);
+  }
+  // include the mixin() method
+  dest.mixin = this.mixin;
+};
+
+module.exports = Outlet;
+},
 "lib/common/shim.util.js": function(module, exports, require){
-var e=require("microee");exports.isRenderable=function(t){return["attach","render"].every(function(e){return typeof t[e]=="function"})},exports.tag=function(e,t,n){function r(e){return e.render&&typeof e.render=="function"||e.type&&e.type=="tag"||typeof e=="function"?e:Array.isArray(e)?e.map(r):{type:"text",data:e}}arguments.length==2?(n=t,t={}):arguments.length==1&&(n="",t={});var i={type:"tag",name:e,attribs:t,children:[]};return typeof n!="undefined"&&n!==""&&(i.children=[].concat(r(n))),i},exports.chain=function(e){return function(t,n){var r=t,i=0;for(;i<e.length;i++)r=e[i](r,n);return r}},exports.dfsTraverse=function(e,t,n,r){function f(e,t,n){Array.isArray(n)?(i=n.concat(i),s=n.map(function(){return e}).concat(s),o=n.map(function(){return t}).concat(o)):(i.unshift(n),s.unshift(e),o.unshift(t))}var i=Array.isArray(e)?e:[e],s=i.map(function(){return t||undefined}),o=i.map(function(){return n||undefined}),u,a;while(i.length>0){item=i.shift(),t=s.shift(),n=o.shift();if(item.render){var l=item.render();r(l,item,t,n),l.children&&f(l,item,l.children)}else item.children?(r(item,undefined,t,n),f(item,n,item.children)):Array.isArray(item)?f(t,n,item):r(item,undefined,t,n)}return};},
+var microee = require('microee');
+
+exports.isRenderable = function isRenderable(obj) {
+  // is it a view or outlet? Duck typing: if it conforms to the expected interface, then it is a view or outlet
+  return ['attach', 'render'].every(function(name) {
+      return typeof obj[name] == 'function';
+    });
+}
+
+exports.tag = function(tagName, attributes, value) {
+  if(arguments.length == 2) {
+    // tag(name, attr, content) can be called as tag(name, content)
+    value = attributes;
+    attributes = { };
+  } else if(arguments.length == 1) {
+    // tag(name, attr, content) can be called as tag(name)
+    value = '';
+    attributes = { };
+  }
+
+  function renderValue(value) {
+    // value may be one of:
+    if(value.render && typeof value.render == 'function' ||
+      value.type && value.type == 'tag' ||
+      typeof value == 'function') {
+      // 1. a view object with a .render() function
+      // Note: it used to be that .tag() would cause a render but that is not needed in the new
+      // model where every tree of renderables is passed through either `.html()` or `.attach()`
+      // 2. a DOM element (or equivalent in the current shim)
+      // 3. a function representing a binding
+      return value;
+    } else if(Array.isArray(value)) {
+      // 4. an array of any of the others
+      // -> items in the array must be views, DOM elements or other arrays
+      // (not strings, since they always need a containing $.tag call)
+      return value.map(renderValue);
+    } else {
+      // 5. a string | date | other primitive
+      return { type: 'text', data: value };
+    }
+  }
+
+  var r = { type: 'tag', name: tagName, attribs: attributes, children: [] };
+  if(typeof value != 'undefined') {
+    if(value !== '') {
+      r.children = [].concat(renderValue(value));
+    }
+  }
+
+  return r;
+};
+
+// Helper function: takes an array of functions and returns a function that applies them all in one step
+// Used to combine functions when only one callback is supported
+exports.chain = function(fns) {
+  return function(input, parent) {
+    // apply the map stack on the node
+    var result = input,
+        i = 0;
+    for(; i < fns.length; i++) {
+      result = fns[i](result, parent);
+    }
+    return result;
+  };
+};
+
+exports.dfsTraverse = function(tree, parentTag, parentView, callback) {
+  var nodes = (Array.isArray(tree) ? tree : [tree]),
+      // all the initial nodes have a "undefined" parent tag
+      parentTags = nodes.map(function() { return parentTag || undefined; }),
+      // all the initial nodes have a "undefined" parent view
+      parentViews = nodes.map(function() { return parentView || undefined; }),
+      tag, view;
+
+  function push(nextParentTag, nextParentView, children) {
+    if(Array.isArray(children)) {
+      nodes = children.concat(nodes);
+      // the current tag is the parent of it's children (duh!)
+      parentTags = children.map(function() { return nextParentTag; }).concat(parentTags);
+      // the parent view only changes occasionally - when we render things!
+      parentViews = children.map(function() { return nextParentView; }).concat(parentViews);
+    } else {
+      nodes.unshift(children);
+      parentTags.unshift(nextParentTag);
+      parentViews.unshift(nextParentView);
+    }
+  }
+
+  // really, when a view is rendered, there are two items:
+  // - the object representing the view
+  // - the tag (with the same id as the view) from the render which encloses the content of the view
+
+  while(nodes.length > 0) {
+    item = nodes.shift();
+    parentTag = parentTags.shift();
+    parentView = parentViews.shift();
+
+    // item can be one of:
+    if(item.render) {
+      // 1. Renderable (view)
+      var result = item.render();
+
+      // process the current node - there is a current view as well
+      callback(result, item, parentTag, parentView);
+
+      if(result.children) {
+        // if this item is a renderable, then this item is the next parent
+        push(result, item, result.children);
+      }
+    } else if(item.children) {
+      // 2. tag with children
+
+      // process the current node - there is no current view
+      callback(item, undefined, parentTag, parentView);
+
+      // push all the child nodes of the current node at the top of the stack
+      // since this item is not renderable, parentView is the same for the children as it is for this item
+      push(item, parentView, item.children);
+    } else if(Array.isArray(item)) {
+      // 3. Array of items
+      // push these onto the stack - retain the same parentTag, same parentView
+      push(parentTag, parentView, item);
+    } else {
+      // 4. Misc (tag, function etc.)
+      // process the current node - there is no current view, no children
+      callback(item, undefined, parentTag, parentView);
+    }
+  }
+  return;
+};
+},
 "lib/common/collection.js": function(module, exports, require){
-function t(e,t){e||(e=[]),t||(t={}),this.models=e,this._options=t,t.model&&(this.models=this.models.map(function(e){return e instanceof t.model?e:new t.model(e)}))}var e=require("microee");e.mixin(t),t.prototype.get=function(e){return this.models[e]},t.prototype.add=function(e,t){var n=this;Array.isArray(e)||(e=[e]),e.forEach(function(e){var t=n.models.length;n._options&&n._options.model&&!(e instanceof n._options.model)&&(e=new n._options.model(e)),n.models.push(e),n.emit("add",e,n,{at:t})})},t.prototype.pipe=function(e){function n(t,n,r){e.bind(t,n,r)}function r(t,n,r){e.remove(t,n,r)}function i(t,n){e.reset(t,n)}var t=this;return t.models.forEach(function(t){e.bind(t)}),t.on("add",n),t.on("remove",r),t.on("reset",i),e.on("unpipe",function(){t.removeListener("add",n),t.removeListener("remove",r),t.removeListener("reset",i)}),e.emit("pipe",t),e},module.exports=t;},
+var Backbone = require('backbone');
+
+var Collection = Backbone.Collection.extend({
+  pipe: pipe
+});
+
+function pipe(dest) {
+  var source = this;
+  // pipe the current content
+  source.models.forEach(function(model) {
+    dest.bind(model);
+  })
+
+  // "add" (model, collection, options) — when a model is added to a collection.
+  function onAdd(model, collection, options) {
+    dest.bind(model, collection, options);
+  }
+  // "remove" (model, collection, options) — when a model is removed from a collection.
+  function onRemove(model, collection, options) {
+    dest.remove(model, collection, options);
+  }
+  // "reset" (collection, options) — when the collection's entire contents have been replaced.
+  function onReset(collection, options) {
+    dest.reset(collection, options);
+  }
+  source.on('add', onAdd);
+  source.on('remove', onRemove);
+  source.on('reset', onReset);
+
+  // + cleanup when cleared
+  dest.on('unpipe', function() {
+    source.removeListener('add', onAdd);
+    source.removeListener('remove', onRemove);
+    source.removeListener('reset', onReset);
+  });
+
+  dest.emit('pipe', source);
+  // allow for unix-like usage: A.pipe(B).pipe(C)
+  return dest;
+};
+
+module.exports = Collection;
+},
 "lib/common/table_view.js": function(module, exports, require){
-;},
+
+/*
+  TableView is a subclass of CollectionView.
+
+  It adds:
+
+  - the ability to sort by a column
+  - pagination
+  - rendering a visible portion only
+  - filtering
+
+  Sorting is done on the underlying collection directly.
+  In other words, a click on a sortable column results in
+  - a change in the params of the sortBy function on the BB collection
+  - a call to collection.sort() to force a re-sort
+
+  Options:
+
+    title: 'Name',
+    content: 'name'
+
+*/
+},
 "lib/common/collection_view.js": function(module, exports, require){
-function n(e,n,r){var i=this;this._render?this.outlet=new t(e,n,r):t.call(this,e,n,r),this._childView=null,this._renderCache=null}var e=typeof window!="undefined"?require("../web/shim.js"):require("../shim.js"),t=require("./outlet.js");t.mixin(n),n.prototype.render=function(){return this._render?(this._renderCache||(this.emit("render"),this._renderCache=this._render(this.outlet)),this._renderCache):t.prototype.render.call(this)},n.prototype.bind=function(e,t,n){var r=new this._childView;r.bind(e),this.outlet?this.outlet.add(r,n):this.add(r,n)},n.prototype.onReset=function(){},n.prototype.onRemove=function(){},module.exports=n;},
+var $ = (typeof window != 'undefined' ? require('../web/shim.js') : require('../shim.js')),
+    Outlet = require('./outlet.js');
+
+/*
+ CollectionView is a type of Outlet.
+
+ It adds:
+ - the ability specify a child view
+ - the ability to respond to collection events (e.g. on add, instantiate a new child view etc.)
+*/
+
+function CollectionView(tagName, attributes, content) {
+  var self = this;
+
+  // Two ways to define this:
+  if(this._render) {
+    // 1) object with ._render
+    this.outlet = new Outlet(tagName, attributes, content);
+  } else {
+    // 2) tagName, attributes, content
+    Outlet.call(this, tagName, attributes, content);
+  }
+  // class to instantiate for child views
+  this._childView = null;
+  this._renderCache = null;
+  // views by model.cid
+  this._viewByModel = {};
+}
+
+Outlet.mixin(CollectionView);
+
+CollectionView.prototype.render = function() {
+  if(this._render) {
+    // special render(outlet) function
+    if(!this._renderCache) {
+      this.emit('render');
+      this._renderCache = this._render(this.outlet);
+    }
+    return this._renderCache;
+  } else {
+    // passthrough
+    return Outlet.prototype.render.call(this);
+  }
+};
+
+CollectionView.prototype.bind = function(model, collection, options) {
+  // instantiate a new child view, and bind the model to it
+  var view = new this._childView(),
+      outlet = (this.outlet ? this.outlet : this);
+  view.bind(model);
+
+  this._viewByModel[model.cid] = view;
+
+  outlet.add(view, options);
+};
+
+var oldRemove = CollectionView.prototype.remove;
+
+CollectionView.prototype.remove = function(model, collection, options) {
+  // find the view, and remove it
+  if(this._viewByModel[model.cid]) {
+    if(this.outlet) {
+      this.outlet.remove(this._viewByModel[model.cid]);
+    } else {
+      oldRemove.call(this, this._viewByModel[model.cid]);
+    }
+  }
+};
+
+// called from the source - note that these are not for direct use;
+// operations should be applied on the collection and it's models directly and never on the view itself
+CollectionView.prototype.onReset = function() { };
+CollectionView.prototype.onRemove = function() {
+
+};
+
+module.exports = CollectionView;
+},
 "htmlparser-to-html": {"c":1,"m":"index.js"},
 "microee": {"c":2,"m":"index.js"}};
 require.m[1] = {
 "jQuery": { exports: window.jQuery },
 "minilog": { exports: window.Minilog },
+"backbone": { exports: window.Backbone },
 "index.js": function(module, exports, require){
-function u(e){if(typeof e=="number"||typeof e=="boolean")return e.toString();if(typeof e!="string"){if(!e.toString||typeof e.toString!="function")return"";e=e.toString()}return e.replace(t,"&amp;").replace(r,"&lt;").replace(i,"&gt;").replace(s,"&#34;").replace(o,"&#61;")}function a(t,n,r){if(Array.isArray(t))return t.map(function(e){return a(e,n,r)}).join("");var i=t;r&&(t=r(t,n));if(typeof t!="undefined"&&typeof t.type!="undefined")switch(t.type){case"text":return t.data;case"directive":return"<"+t.data+">";case"comment":return"<!--"+t.data+"-->";case"style":case"script":case"tag":var s="<"+t.name;return t.attribs&&Object.keys(t.attribs).length>0&&(s+=" "+Object.keys(t.attribs).map(function(e){return e+'="'+u(t.attribs[e])+'"'}).join(" ")),t.children?(i.render||(i=n),s+=">"+a(t.children,i,r)+(e[t.name]?"":"</"+t.name+">")):e[t.name]?s+=">":s+="></"+t.name+">",s;case"cdata":return"<!CDATA["+t.data+"]]>"}return t}var e={area:1,base:1,basefont:1,br:1,col:1,frame:1,hr:1,img:1,input:1,isindex:1,link:1,meta:1,param:1,embed:1,"?xml":1},t=/&/g,n=/&([^a-z#]|#(?:[^0-9x]|x(?:[^0-9a-f]|$)|$)|$)/gi,r=/</g,i=/>/g,s=/\"/g,o=/\=/g;module.exports=a;}};
+var emptyTags = {
+  "area": 1,
+  "base": 1,
+  "basefont": 1,
+  "br": 1,
+  "col": 1,
+  "frame": 1,
+  "hr": 1,
+  "img": 1,
+  "input": 1,
+  "isindex": 1,
+  "link": 1,
+  "meta": 1,
+  "param": 1,
+  "embed": 1,
+  "?xml": 1
+};
+
+var ampRe = /&/g,
+    looseAmpRe = /&([^a-z#]|#(?:[^0-9x]|x(?:[^0-9a-f]|$)|$)|$)/gi,
+    ltRe = /</g,
+    gtRe = />/g,
+    quotRe = /\"/g,
+    eqRe = /\=/g;
+
+function escapeAttrib(s) {
+  if(typeof s == 'number' || typeof s == 'boolean') return s.toString();
+  if(typeof s != 'string') {
+    if(!s || !s.toString || typeof s.toString != 'function') {
+      return '';
+    } else {
+      s = s.toString();
+    }
+  }
+  // Escaping '=' defangs many UTF-7 and SGML short-tag attacks.
+  return s.replace(ampRe, '&amp;').replace(ltRe, '&lt;').replace(gtRe, '&gt;')
+      .replace(quotRe, '&#34;').replace(eqRe, '&#61;');
+}
+
+function html(item, parent, eachFn) {
+  // apply recursively to arrays
+  if(Array.isArray(item)) {
+    return item.map(function(subitem) {
+      // parent, not item: the parent of an array item is not the array,
+      // but rather the element that contained the array
+      return html(subitem, parent, eachFn);
+    }).join('');
+  }
+  var orig = item;
+  if(eachFn) {
+    item = eachFn(item, parent);
+  }
+  if(typeof item != 'undefined' && typeof item.type != 'undefined') {
+    switch(item.type) {
+      case 'text':
+        return item.data;
+      case 'directive':
+        return '<'+item.data+'>';
+      case 'comment':
+        return '<!--'+item.data+'-->';
+      case 'style':
+      case 'script':
+      case 'tag':
+        var result = '<'+item.name;
+        if(item.attribs && Object.keys(item.attribs).length > 0) {
+          result += ' '+Object.keys(item.attribs).map(function(key){
+                  return key + '="'+escapeAttrib(item.attribs[key])+'"';
+                }).join(' ');
+        }
+        if(item.children) {
+          // parent becomes the current element
+          // check if the current item (before any eachFns are run) - is a renderable
+          if(!orig.render) {
+            orig = parent;
+          }
+          result += '>'+html(item.children, orig, eachFn)+(emptyTags[item.name] ? '' : '</'+item.name+'>');
+        } else {
+          if(emptyTags[item.name]) {
+            result += '>';
+          } else {
+            result += '></'+item.name+'>';
+          }
+        }
+        return result;
+      case 'cdata':
+        return '<!CDATA['+item.data+']]>';
+    }
+  }
+  return item;
+}
+
+module.exports = html;
+}};
 require.m[2] = {
 "jQuery": { exports: window.jQuery },
 "minilog": { exports: window.Minilog },
+"backbone": { exports: window.Backbone },
 "index.js": function(module, exports, require){
-function e(){this._events={}}e.prototype={on:function(e,t){this._events||(this._events={});var n=this._events;return(n[e]||(n[e]=[])).push(t),this},removeListener:function(e,t){var n=this._events[e]||[],r;for(r=n.length-1;r>=0&&n[r];r--)(n[r]===t||n[r].cb===t)&&n.splice(r,1)},removeAllListeners:function(e){e?this._events[e]&&(this._events[e]=[]):this._events={}},emit:function(e){this._events||(this._events={});var t=Array.prototype.slice.call(arguments,1),n,r=this._events[e]||[];for(n=r.length-1;n>=0&&r[n];n--)r[n].apply(this,t);return this},when:function(e,t){return this.once(e,t,!0)},once:function(e,t,n){function r(){n||this.removeListener(e,r),t.apply(this,arguments)&&n&&this.removeListener(e,r)}return t?(r.cb=t,this.on(e,r),this):this}},e.mixin=function(t){var n=e.prototype,r;for(r in n)n.hasOwnProperty(r)&&(t.prototype[r]=n[r])},module.exports=e;}};
+function M() { this._events = {}; }
+M.prototype = {
+  on: function(ev, cb) {
+    this._events || (this._events = {});
+    var e = this._events;
+    (e[ev] || (e[ev] = [])).push(cb);
+    return this;
+  },
+  removeListener: function(ev, cb) {
+    var e = this._events[ev] || [], i;
+    for(i = e.length-1; i >= 0 && e[i]; i--){
+      if(e[i] === cb || e[i].cb === cb) { e.splice(i, 1); }
+    }
+  },
+  removeAllListeners: function(ev) {
+    if(!ev) { this._events = {}; }
+    else { this._events[ev] && (this._events[ev] = []); }
+  },
+  emit: function(ev) {
+    this._events || (this._events = {});
+    var args = Array.prototype.slice.call(arguments, 1), i, e = this._events[ev] || [];
+    for(i = e.length-1; i >= 0 && e[i]; i--){
+      e[i].apply(this, args);
+    }
+    return this;
+  },
+  when: function(ev, cb) {
+    return this.once(ev, cb, true);
+  },
+  once: function(ev, cb, when) {
+    if(!cb) return this;
+    function c() {
+      if(!when) this.removeListener(ev, c);
+      if(cb.apply(this, arguments) && when) this.removeListener(ev, c);
+    }
+    c.cb = cb;
+    this.on(ev, c);
+    return this;
+  }
+};
+M.mixin = function(dest) {
+  var o = M.prototype, k;
+  for (k in o) {
+    o.hasOwnProperty(k) && (dest.prototype[k] = o[k]);
+  }
+};
+module.exports = M;
+}};
 Cato = require('lib/web/index.js');
 }());
