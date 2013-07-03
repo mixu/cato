@@ -4,7 +4,7 @@ var assert = require('assert'),
     Outlet = require('cato').Outlet,
     $ = require('cato').Shim,
     View = require('cato').View,
-    Model = require('./lib/model.js');
+    Model = require('backbone').Model;
 
 var id = 1000;
 

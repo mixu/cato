@@ -351,7 +351,7 @@ Shim._attach = function(parent, tree, task) {
   // so no "attach" events are emitted since there is no root view.
   // the attach listeners are on parentView in this case, so call it.
   if(roots.length == 0 && origParentView) {
-    origParentView.emit('attach');
+    origParentView.attach();
   }
 
   // return html (so that this can also be used for ".html")
@@ -977,7 +977,7 @@ var ampRe = /&/g,
 function escapeAttrib(s) {
   if(typeof s == 'number' || typeof s == 'boolean') return s.toString();
   if(typeof s != 'string') {
-    if(!s || !s.toString || typeof s.toString != 'function') {
+    if(!s.toString || typeof s.toString != 'function') {
       return '';
     } else {
       s = s.toString();
