@@ -19,10 +19,10 @@
   "readmeFilename": "readme.md",
   "dependencies": {
     "microee": "~0.0.2",
-    "gluejs": "git://github.com/mixu/gluejs.git#glue2",
+    "gluejs": "~2.0.6",
     "htmlparser": "~1.7.6",
-    "htmlparser-to-html": "~0.0.4",
-    "minilog": "git://github.com/mixu/minilog.git#master"
+    "htmlparser-to-html": "~0.0.5",
+    "minilog": "~2.0.2"
   },
   "devDependencies": {
     "html": "0.0.7",
