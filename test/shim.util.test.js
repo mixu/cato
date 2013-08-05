@@ -190,10 +190,10 @@ module.exports['shim util tests'] = {
     });
 
     var tagPath = mapResults.map(function(item) {
-          return (item.tag && item.tag.attribs && item.tag.attribs.id ? item.tag.attribs.id : '?');
+          return (item.tag && item.tag.attribs && item.tag.attribs.id ? item.tag.attribs.id : '_');
         }).join(','),
         viewPath = mapResults.map(function(item) {
-          return (item.view && item.view.id ? item.view.id : '?');
+          return (item.view && item.view.id ? item.view.id : '_');
         }).join(','),
         parentPath = mapResults.map(function(item) {
           return (item.parentTag && item.parentTag.attribs && item.parentTag.attribs.id ? item.parentTag.attribs.id : '!');
@@ -208,10 +208,11 @@ module.exports['shim util tests'] = {
     console.log('parTags: ', parentPath);
     console.log('parViews:', parentViewPath);
 
-    assert.equal(tagPath,        'a,b,1,C,d,2,E,f');
-    assert.equal(viewPath,       '?,?,1,C,?,2,E,?');
-    assert.equal(parentPath,     '!,a,!,!,C,C,C,E');
-    assert.equal(parentViewPath, '!,!,!,!,C,C,C,E');
+    // since changes in the id's are not really important, fuzzy match
+    assert.ok(tagPath       .match(/a,b,.,C,d,.,E,f/));
+    assert.ok(viewPath      .match(/_,_,.,C,_,.,E,_/));
+    assert.ok(parentPath    .match(/!,a,!,!,C,C,C,E/));
+    assert.ok(parentViewPath.match(/!,!,!,!,C,C,C,E/));
 
   },
 

@@ -30,4 +30,7 @@ build:
 	--main lib/web/index.js \
 	--out dist/cato.js
 
-.PHONY: build build-debug test
+style:
+	jshint lib
+
+.PHONY: build build-debug test style
