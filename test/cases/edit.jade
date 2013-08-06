@@ -1,0 +1,12 @@
+div(style='display: none;')
+  form(action='/v1/items')
+    h3 Edit item
+    p
+      label Name:
+      input(type='text', name='name', value='', placeholder='New item')
+    p
+      label Hostname:
+      input(name='hostname', type='text', size='45', placeholder='localhost', value='localhost')
+    p(id='this.errorId', class='alert alert-error', style='display: none')
+    a(href='/items', class='btn') Cancel
+    a(href='#', class='btn btn-primary', onclick='self.save(); return false;') Save

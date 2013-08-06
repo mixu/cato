@@ -81,8 +81,8 @@ module.exports['shim util tests'] = {
     var itemPath = mapResults.map(function(item) { return item.item.i; }).join(','),
         parentPath = mapResults.map(function(item) { return (item.parent ? item.parent.i : '!'); }).join(',');
 
-    console.log('items:', itemPath);
-    console.log('parents:', parentPath);
+    // console.log('items:', itemPath);
+    // console.log('parents:', parentPath);
 
     assert.equal(itemPath,   'r,f,d,e,c,b,a');
     assert.equal(parentPath, '!,r,f,f,r,c,b');
@@ -142,8 +142,8 @@ module.exports['shim util tests'] = {
     var itemPath = mapResults.map(function(item) { return item.item.id; }).join(','),
         parentPath = mapResults.map(function(item) { return (item.parentTag ? item.parentTag.id : '!'); }).join(',');
 
-    console.log('items:', itemPath);
-    console.log('parents:', parentPath);
+    // console.log('items:', itemPath);
+    // console.log('parents:', parentPath);
 
     assert.equal(itemPath,   'r,f,d,e,c,b,a');
     assert.equal(parentPath, '!,r,f,f,r,c,b');
@@ -180,12 +180,12 @@ module.exports['shim util tests'] = {
     ShimUtil.dfsTraverse(root, undefined, undefined, function(tag, view, parentTag, parentView) {
      // skip text nodes
       if(tag.type && tag.type == 'text') return;
-      console.log('item:',
-          (tag && tag.attribs && tag.attribs.id ? tag.attribs.id : JSON.stringify(tag)),
-          (view && view.id ? view.id : JSON.stringify(view)),
-          (parentTag && parentTag.attribs && parentTag.attribs.id ? parentTag.attribs.id : JSON.stringify(parentTag)),
-          (parentView && parentView.id ? parentView.id : JSON.stringify(parentView))
-          );
+      // console.log('item:',
+      //    (tag && tag.attribs && tag.attribs.id ? tag.attribs.id : JSON.stringify(tag)),
+      //    (view && view.id ? view.id : JSON.stringify(view)),
+      //    (parentTag && parentTag.attribs && parentTag.attribs.id ? parentTag.attribs.id : JSON.stringify(parentTag)),
+      //    (parentView && parentView.id ? parentView.id : JSON.stringify(parentView))
+      //    );
       mapResults.push({ tag: tag, view: view, parentTag: parentTag, parentView: parentView });
     });
 
@@ -203,10 +203,10 @@ module.exports['shim util tests'] = {
         }).join(',');
 
 
-    console.log('tags:    ', tagPath);
-    console.log('views:   ', viewPath);
-    console.log('parTags: ', parentPath);
-    console.log('parViews:', parentViewPath);
+    // console.log('tags:    ', tagPath);
+    // console.log('views:   ', viewPath);
+    // console.log('parTags: ', parentPath);
+    // console.log('parViews:', parentViewPath);
 
     // since changes in the id's are not really important, fuzzy match
     assert.ok(tagPath       .match(/a,b,.,C,d,.,E,f/));
@@ -238,13 +238,13 @@ module.exports['shim util tests'] = {
       }
     });
 
-    console.log(util.inspect(rootTags, null, 10, true));
-    console.log(pretty(toHTML(rootTags, null, function(item) {
-      if(item.render) {
-        return item._renderCache;
-      }
-      return item;
-    })));
+    // console.log(util.inspect(rootTags, null, 10, true));
+    // console.log(pretty(toHTML(rootTags, null, function(item) {
+    //   if(item.render) {
+    //     return item._renderCache;
+    //   }
+    //   return item;
+    // })));
   },
 
   'allow tag(name, attr, content) to be called as tag(name, content)': function() {

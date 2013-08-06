@@ -1,5 +1,73 @@
 # Cato testing plan
 
+  given a collection
+    ✓ single wrapping element
+    ✓ render method wrapper
+
+  event tests -
+    ✓ render event is emitted on a view
+    ✓ render event is emitted on a outlet
+    ✓ attach event is emitted on a view
+    ✓ attach event is emitted on a outlet
+    ✓ show and hide events are emitted on a view
+    unbind and rebind events
+      ✓ can unbind a specific model or all models
+      ✓ can rebind a specific model
+
+  event tests - nested events
+    ✓ attach and render events are emitted on an tag, and all its content descendants
+    ✓ attach and render events are emitted on an array, and all its descendants
+    ✓ attach and render events are emitted on a outlet, and all its descendants
+
+  event tests - outlet
+    ✓ render, attach and destroy events are emitted when new items are added and removed in an outlet
+    ✓ show and hide events are emitted on the contents when calling outlet.toggle()
+
+  model bindings
+    ✓ function on a tag
+    ✓ function with model listeners
+    ✓ function as attribute binding
+    ✓ function as onX attribute binding
+    ✓ given a view with tags with bound values and bound attributes, manually assigning ids to the tags with bindings is optional
+    ✓ it should be possible to update the contents of an attached view with new renderables that include bindings
+    ◦ when the new content in update() does not contain any root views, but contains tags that expect "attach", they should still call listenTo / l    ✓ when the new content in update() does not contain any root views, but contains tags that expect "attach", they should still call listenTo / listenDom on the parent
+
+  shim util tests
+    ✓ multiply-sum example
+    ✓ dfsTraverse can traverse a tree of tags, with parentTag
+    ✓ dfsTraverse can traverse a tree of tags and views, with parentTag and parentView
+    ✓ dfsTraverse can be used to collect a tags-only tree
+    ✓ allow tag(name, attr, content) to be called as tag(name, content)
+    ✓ allow tag(name, attr, content) to be called as tag(name)
+
+  unified rendering -
+    simple
+      ✓ render a html string
+      ✓ render single tag
+      ✓ render single view
+      ✓ render single outlet
+    container
+      ✓ render string inside tag
+      ✓ render string inside outlet
+      ✓ render tag inside tag
+      ✓ render tag inside outlet
+      ✓ render view inside tag
+      ✓ render view inside outlet
+      ✓ render outlet inside tag
+      ✓ render outlet inside outlet
+    arrays
+      ✓ render array inside tag
+      ✓ render array inside outlet
+
+  viewify -
+    ✓ can viewify a string
+    ✓ can viewify a tag
+    ✓ can viewify an array of renderables
+
+
+  44 passing (40 ms)
+
+
 ## How to express functions on items in collections which are not populated yet?
 
 E.g:

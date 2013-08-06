@@ -1,0 +1,14 @@
+td
+  a(id="this.linkId", href="this.getLink(scripts)") this.name
+td
+  p new TagList()
+td
+  p this.updatedAt by this.createdBy.get('name') || unknown
+td
+  .btn-group
+    button(class="btn btn-small", onclick="this.edit()") Edit
+    button(class="btn btn-small dropdown-toggle", data-toggle="dropdown")
+      span.caret
+    ul.dropdown-menu
+      li
+        a(href="#", data-toggle="dropdown", onclick="this.delete()") Delete

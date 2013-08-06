@@ -142,9 +142,9 @@ exports['model bindings'] = {
 
     // attach to DOM
     $('body').update(view);
-    console.log($.html($.get('body')));
+    // console.log($.html($.get('body')));
 
-    console.log(bindCalls, viewEvents, listenerCalls);
+    // console.log(bindCalls, viewEvents, listenerCalls);
   },
 
   // 3. "onX attribute binding": a function that responds to DOM events
@@ -160,8 +160,8 @@ exports['model bindings'] = {
 
     // attach to DOM
     $('body').update(view);
-    console.log($.html($.get('body')));
-    console.log(bindCalls, viewEvents, listenerCalls);
+    // console.log($.html($.get('body')));
+    // console.log(bindCalls, viewEvents, listenerCalls);
   },
 
 
@@ -227,7 +227,7 @@ exports['model bindings'] = {
 
     IncrementalView.prototype.bind = function(model) {
       this.model = model;
-      console.log(model);
+      // console.log(model);
       $(this.id).update($.tag('p', {}, new Function('firstname', 'return firstname;')));
     };
 
@@ -237,14 +237,14 @@ exports['model bindings'] = {
     // attach to DOM
     $('body').update(view);
     var result = $.html($.get('body'));
-    console.log(result);
+    // console.log(result);
     assert.ok(/.*Not yet bound.*/.test(result));
     assert.ok(/.*Hello world.*/.test(result) == false);
 
     // now update the content of the view with new renderables - after the view has been attached
     view.bind(model);
     result = $.html($.get('body'));
-    console.log(result);
+    // console.log(result);
     assert.ok(/.*Not yet bound.*/.test(result) == false);
     assert.ok(/.*Hello world.*/.test(result));
   },

@@ -1,0 +1,9 @@
+.modal(style="display: none;")
+  form
+    div(class="modal-body modal-prompt")
+      p
+        p(id="this.promptId") Enter new name:
+        input(id="this.inputId", type="text", size="45" value="")
+    .modal-footer
+      button.btn(type="button", onclick="this.cancel()") Cancel
+      button(type="submit", class="btn btn-primary", onclick="this.done()") Ok
