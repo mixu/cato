@@ -1,0 +1,38 @@
+#!/usr/bin/env node
+var Cato = require('../lib/index.js'),
+    fs = require('fs'),
+    path = require('path');
+
+var opts = require('optimist')
+    .usage('Usage: $0 --include <file/dir ...>')
+    .options({
+      'include': {
+        describe: 'Path to import.'
+      }
+    }),
+    argv = opts.parse(process.argv);
+
+var compiler = Cato.Jade;
+
+if(argv['include']) {
+  var file = path.resolve(process.cwd(), argv['include']);
+  // console.log(file);
+
+  // A single file, no .js file of the same name
+
+  var code = compiler.render(compiler.convert(fs.readFileSync(file).toString()));
+  console.log('var $ = Cato.Shim;');
+  console.log('');
+  console.log('function TestView() {};');
+  console.log('');
+  console.log('Cato.View.mixin(TestView);');
+  console.log('');
+  console.log('TestView.prototype.render = function() {');
+  console.log('  return [\n    ' + code.join(',\n    ')+'\n  ];');
+  console.log('};');
+  // runner
+  console.log('$(jQuery("body")).append(new TestView());');
+
+  // File with a .js file of the same name
+
+}

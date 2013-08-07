@@ -58,12 +58,21 @@ Object.keys(cases).forEach(function(testName) {
 
   exports[testName] = function() {
 //    console.log(diff.compare(parse(original), expected));
-
+    var result = parse(original);
     console.log('\nResult:');
-    console.log(util.inspect(parse(original), null, 20, true));
+    console.log(util.inspect(result, null, 20, true));
     console.log('\nExpected:');
     console.log(util.inspect(expected, null, 20, true));
-    assert.deepEqual(parse(original), expected);
+
+    assert.deepEqual(result, expected);
+
+    var code = compiler.render(result),
+        evaled = code.map(function(c) { return eval(c) });
+
+    console.log(code);
+    console.log(util.inspect(evaled, null, 20, true));
+
+    assert.deepEqual(result, evaled);
   }
 });
 

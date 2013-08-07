@@ -22,7 +22,8 @@
     "gluejs": "~2.0.6",
     "htmlparser": "~1.7.6",
     "htmlparser-to-html": "~0.0.5",
-    "minilog": "~2.0.2"
+    "minilog": "~2.0.2",
+    "optimist": "~0.6.0"
   },
   "devDependencies": {
     "html": "0.0.7",
