@@ -12,27 +12,45 @@ var opts = require('optimist')
     }),
     argv = opts.parse(process.argv);
 
+// output options:
+// Transform:
+// --exports; require('Cato'), module.exports; in view: .render = require('./view.jade.js');
+// --amd; require(['Cato'], function(..) { return ... }; in view: .render = require('./view.jade.js');
+// Execute:
+// --include <file> --http <file>; HTTP server + single file
+// --include <file> --run <file>; run in node
+
 var compiler = Cato.Jade;
 
 if(argv['include']) {
-  var file = path.resolve(process.cwd(), argv['include']);
-  // console.log(file);
+  var file = path.resolve(process.cwd(), argv['include']),
+      jsFile = path.dirname(file) + '/' +path.basename(file, '.jade') + '.js',
+      hasJsFile = fs.existsSync(jsFile);
 
-  // A single file, no .js file of the same name
+  if(!fs.existsSync(file)) {
+    console.log('File not found: ' + file);
+    process.exit();
+  }
 
-  var code = compiler.render(compiler.convert(fs.readFileSync(file).toString()));
-  console.log('var $ = Cato.Shim;');
-  console.log('');
-  console.log('function TestView() {};');
-  console.log('');
-  console.log('Cato.View.mixin(TestView);');
-  console.log('');
-  console.log('TestView.prototype.render = function() {');
-  console.log('  return [\n    ' + code.join(',\n    ')+'\n  ];');
-  console.log('};');
-  // runner
-  console.log('$(jQuery("body")).append(new TestView());');
+  console.log(file, jsFile);
 
-  // File with a .js file of the same name
+  if(!hasJsFile) {
+    // A single file, no .js file of the same name
+    var code = compiler.render(compiler.convert(fs.readFileSync(file).toString()));
+    console.log('var $ = Cato.Shim;');
+    console.log('');
+    console.log('function TestView() {};');
+    console.log('');
+    console.log('Cato.View.mixin(TestView);');
+    console.log('');
+    console.log('TestView.prototype.render = function() {');
+    console.log('  return [\n    ' + code.join(',\n    ')+'\n  ];');
+    console.log('};');
+    // runner
+    console.log('$(jQuery("body")).append(new TestView());');
+  } else {
+    // File with a .js file of the same name
 
+
+  }
 }
