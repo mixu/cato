@@ -168,7 +168,7 @@ Shim._attach = function(parent, tree, task) {
 
   // Parent is one of: null or an id (TODO: HTML element)
   // Find out if the parent exists - if it does, set the parentView and parentTag values in dfsTraverse
-  var origParentTag = undefined, origParentView = undefined;
+  var origParentTag, origParentView;
   if(parent) {
     origParentTag = Shim.get(parent);
     origParentView = viewById[parent];
@@ -350,7 +350,7 @@ Shim._attach = function(parent, tree, task) {
   // this fixes the case where an incremental update is made, which just contains tags,
   // so no "attach" events are emitted since there is no root view.
   // the attach listeners are on parentView in this case, so call it.
-  if(roots.length == 0 && origParentView) {
+  if(roots.length === 0 && origParentView) {
     origParentView.attach();
   }
 
@@ -472,8 +472,8 @@ View.prototype.listenTo = function(target, eventName, callback) {
 // clean up this DOM listener (via .off with a custom namespace)
 View.prototype.listenDom = function(selector, callback) {
   var match = selector.match(delegateEventSplitter),
-      eventName = match[1] + '.delegateEvents' + this.id,
-      selector = match[2];
+      eventName = match[1] + '.delegateEvents' + this.id;
+  selector = match[2];
 
   if(typeof jQuery != 'undefined') {
     if (selector === '') {
@@ -573,7 +573,7 @@ Outlet.prototype.add = function(view, options) {
 
   var index = (options && options.at ? options.at : this._contents.length);
   // render + append the view to the DOM
-  if(this._contents.length == 0 || index == this._contents.length) {
+  if(this._contents.length === 0 || index == this._contents.length) {
     // the first insert, and inserting at the last position both need to use .append
     $(this.id).append(view);
   } else {
@@ -632,7 +632,7 @@ Outlet.prototype.hide = function(index, context) {
 ['filter', 'forEach', 'every', 'map', 'some'].forEach(function(name) {
   Outlet.prototype[name] = function() {
     return Array.prototype[name].apply(this._contents, arguments);
-  }
+  };
 });
 
 // part of the uniform view interface (e.g. a renderable is togglable)
@@ -671,7 +671,7 @@ exports.isRenderable = function isRenderable(obj) {
   return ['attach', 'render'].every(function(name) {
       return typeof obj[name] == 'function';
     });
-}
+};
 
 exports.tag = function(tagName, attributes, value) {
   if(arguments.length == 2) {
@@ -807,7 +807,7 @@ function pipe(dest) {
   // pipe the current content
   source.models.forEach(function(model) {
     dest.bind(model);
-  })
+  });
 
   // "add" (model, collection, options) — when a model is added to a collection.
   function onAdd(model, collection, options) {
@@ -835,7 +835,7 @@ function pipe(dest) {
   dest.emit('pipe', source);
   // allow for unix-like usage: A.pipe(B).pipe(C)
   return dest;
-};
+}
 
 module.exports = Collection;
 },
@@ -975,17 +975,15 @@ var ampRe = /&/g,
     eqRe = /\=/g;
 
 function escapeAttrib(s) {
-  if(typeof s == 'number' || typeof s == 'boolean') return s.toString();
-  if(typeof s != 'string') {
-    if(!s.toString || typeof s.toString != 'function') {
-      return '';
-    } else {
-      s = s.toString();
-    }
+  // null or undefined
+  if(s == null) { return ''; }
+  if(s.toString && typeof s.toString == 'function') {
+    // Escaping '=' defangs many UTF-7 and SGML short-tag attacks.
+    return s.toString().replace(ampRe, '&amp;').replace(ltRe, '&lt;').replace(gtRe, '&gt;')
+            .replace(quotRe, '&#34;').replace(eqRe, '&#61;');
+  } else {
+    return '';
   }
-  // Escaping '=' defangs many UTF-7 and SGML short-tag attacks.
-  return s.replace(ampRe, '&amp;').replace(ltRe, '&lt;').replace(gtRe, '&gt;')
-      .replace(quotRe, '&#34;').replace(eqRe, '&#61;');
 }
 
 function html(item, parent, eachFn) {
@@ -1041,7 +1039,43 @@ function html(item, parent, eachFn) {
 }
 
 module.exports = html;
-}};
+},
+"package.json": function(module, exports, require){
+module.exports = {
+  "name": "htmlparser-to-html",
+  "version": "0.0.5",
+  "description": "Converts the JSON that the htmlparser/htmlparser2 package produces back to HTML.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mixu/htmlparser-to-html.git"
+  },
+  "keywords": [
+    "html",
+    "parser",
+    "htmlparser",
+    "htmlparser2"
+  ],
+  "author": {
+    "name": "Mikito Takada",
+    "email": "mikito.takada@gmail.com"
+  },
+  "license": "BSD",
+  "readmeFilename": "readme.md",
+  "devDependencies": {
+    "mocha": "~1.9.0",
+    "htmlparser": "~1.7.6"
+  },
+  "readme": "# htmlparser-to-html\n\nConverts the JSON that [htmlparser](https://npmjs.org/package/htmlparser) (and probably [htmlparser2](https://npmjs.org/package/htmlparser2)) produces back to HTML.\n\nUseful if you're doing some sort of transformation.\n\nTests are based on reversing the parser tests in htmlparser, so they are quite comprehensive.\n\n## API\n\nReturns a single function `html(tree, [parent, mapFn])` which returns a html string.\n\nOptionally, you can apply a function to each element just before they are converted to HTML - for example, converting items that are not in the right format into htmlparser-compatible input.\n\n- `tree`: a tree structure produced by htmlparser\n- `parent`: optional param - a parent element, only used for the `mapFn`.\n- `mapFn`: a function(item, parent) that is applied to each element just before the element is converted into html. The parent parameter is either the original value of the parent (default: null), or the parent element of this child element.\n\n## Usage\n\n    var html = require('htmlparser-to-html');\n\n    console.log(html([\n            {   type: 'tag'\n              , name: 'html'\n              , children:\n                 [ { type: 'tag'\n                   , name: 'title'\n                   , children: [ { data: 'The Title', type: 'text' } ]\n                   }\n                 , { type: 'tag'\n                   , name: 'body'\n                   , children: [ { data: 'Hello world', type: 'text' } ]\n                   }\n                 ]\n              }\n            ]));\n\n    // outputs: <html><title>The Title</title><body>Hello world</body></html>\n\nOf course, you probably want to generate the array from htmlparser.\n\n\n\n",
+  "bugs": {
+    "url": "https://github.com/mixu/htmlparser-to-html/issues"
+  },
+  "_id": "htmlparser-to-html@0.0.5",
+  "_from": "htmlparser-to-html@~0.0.5"
+};}};
 require.m[2] = {
 "jQuery": { exports: window.jQuery },
 "minilog": { exports: window.Minilog },
@@ -1094,6 +1128,41 @@ M.mixin = function(dest) {
   }
 };
 module.exports = M;
-}};
+},
+"package.json": function(module, exports, require){
+module.exports = {
+  "name": "microee",
+  "description": "A tiny EventEmitter-like client and server side library",
+  "version": "0.0.2",
+  "author": {
+    "name": "Mikito Takada",
+    "email": "mixu@mixu.net",
+    "url": "http://mixu.net/"
+  },
+  "keywords": [
+    "event",
+    "events",
+    "eventemitter",
+    "emitter"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mixu/microee"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --ui exports --reporter spec --bail ./test/microee.test.js"
+  },
+  "devDependencies": {
+    "mocha": "*"
+  },
+  "readme": "# MicroEE\n\nA client and server side library for routing events.\n\nI was disgusted by the size of [MiniEE](https://github.com/mixu/miniee) (122 sloc, 4.4kb), so I decided a rewrite was in order.\n\nThis time, without the support for regular expressions - but still with the support for \"when\", which is my favorite addition to EventEmitters.\n\nMicroEE is a more satisfying (42 sloc, ~1100 characters), and passes the same tests as MiniEE (excluding the RegExp support, but including slightly tricky ones like removing callbacks set via once() using removeListener where function equality checks are a bit tricky).\n\n# Installing:\n\n    npm install microee\n\n# In-browser version\n\nUse the version in `./dist/`. It exports a single global, `microee`.\n\nTo run the in-browser tests, open `./test/index.html` in the browser after cloning this repo and doing npm install (to get Mocha).\n\n# Using:\n\n    var MicroEE = require('microee');\n    var MyClass = function() {};\n    MicroEE.mixin(MyClass);\n\n    var obj = new MyClass();\n    // set string callback\n    obj.on('event', function(arg1, arg2) { console.log(arg1, arg2); });\n    obj.emit('event', 'aaa', 'bbb'); // trigger callback\n\n# Supported methods\n\n- on(event, listener)\n- once(event, listener)\n- emit(event, [arg1], [arg2], [...])\n- removeListener(event, listener)\n- removeAllListeners([event])\n- when (not part of events.EventEmitter)\n- mixin (not part of events.EventEmitter)\n\n# Niceties\n\n- when(event, callback): like once(event, callback), but only removed if the callback returns true.\n- mixin(obj): adds the MicroEE functions onto the prototype of obj.\n- The following functions return `this`: on(), emit(), once(), when()\n\n# See also:\n\n    http://nodejs.org/api/events.html\n",
+  "readmeFilename": "readme.md",
+  "bugs": {
+    "url": "https://github.com/mixu/microee/issues"
+  },
+  "_id": "microee@0.0.2",
+  "_from": "microee@~0.0.2"
+};}};
 Cato = require('lib/web/index.js');
 }());
