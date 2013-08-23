@@ -125,6 +125,11 @@ exports['model bindings'] = {
     // console.log(bindCalls, viewEvents, listenerCalls);
   },
 
+  'it should be possible to run a view with bindings without binding it': function() {
+    var view = $.viewify('div', {}, function(foo) { return foo; });
+    $.html(view);
+  },
+
 
   // 2. "attribute binding": a function that computes the value of an attribute from one or more model properties
   // - should be run on "render"

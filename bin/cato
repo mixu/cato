@@ -54,3 +54,17 @@ if(argv['include']) {
 
   }
 }
+
+if(argv['run']) {
+  var file = path.resolve(process.cwd(), argv['run']);
+
+  if(path.extname(file) == '.js') {
+    // if the extension is .js, do this:
+    // 1. require the file
+    // 2. instantiate the view
+    // 3. convert the instance to HTML
+    var instance =  new (require(file))();
+    console.log(Cato.Shim.html(instance));
+  }
+
+}

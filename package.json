@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "html": "0.0.7",
-    "backbone": "~1.0.0"
+    "backbone": "~1.0.0",
+    "jade": "~0.35.0"
   }
 }
