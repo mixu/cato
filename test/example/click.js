@@ -1,10 +1,26 @@
-var $ = Cato.Shim;
+var View = require('cato').View,
+    $ = require('cato').Shim;
 
-function TestView() {};
+function TestView() {
+  View.call(this);
+};
 
-Cato.View.mixin(TestView);
+View.mixin(TestView);
 
-TestView.prototype.render = Cato.template('./click.jade');
+TestView.prototype.render = function() {
+  var self = this;
+  return $.tag('div', [
+      $.tag('div', function(count) {
+        return 'Clicks: ' + count;
+      }),
+      $.tag('button', {
+        onclick: function() {
+          self.increment();
+          return false;
+        }
+      }, 'Click me')
+    ]);
+};
 
 TestView.prototype.increment = function() {
   var model = this.model;

@@ -1,7 +1,16 @@
 #!/usr/bin/env node
 var Cato = require('../lib/index.js'),
     fs = require('fs'),
-    path = require('path');
+    path = require('path'),
+    repl = require('repl'),
+    html,
+    Backbone = require('backbone');
+
+try {
+  html = require('html').prettyPrint;
+} catch(e) { }
+
+
 
 var opts = require('optimist')
     .usage('Usage: $0 --include <file/dir ...>')
@@ -63,8 +72,61 @@ if(argv['run']) {
     // 1. require the file
     // 2. instantiate the view
     // 3. convert the instance to HTML
-    var instance =  new (require(file))();
-    console.log(Cato.Shim.html(instance));
+    var instance = new (require(file))(),
+        model, collection;
+    // can also set --json to a path to a JSON file
+    // or a string of JSON
+    if(argv['json']) {
+      var jsonFile = path.resolve(process.cwd(), argv['json']);
+      if(fs.existsSync(jsonFile)) {
+        model = require(jsonFile);
+      } else {
+        try {
+          model = JSON.parse(argv['json']);
+        } catch(e) {
+          console.log('Could not process --json:', argv['json']);
+        }
+      }
+      if(model) {
+        if(argv['interactive']) {
+          model = new Backbone.Model(model);
+        }
+        var isCollectionView = !!(instance._childView);
+        if(isCollectionView) {
+          collection = new Cato.Collection([ model ]);
+          console.log(html(Cato.Shim.html(instance)));
+          collection.pipe(instance);
+        } else {
+          instance.bind(model);
+        }
+      }
+    }
+
+    if(!argv['interactive']) {
+      // if available, use the prettyprinter
+      if(html) {
+        console.log(html(Cato.Shim.html(instance)));
+      } else {
+        console.log(Cato.Shim.html(instance));
+      }
+    } else {
+      console.log('REPL variables: model, view.');
+      console.log('Call html(view) to print the view as HTML');
+      var context = repl.start({}).context;
+      context.view = instance;
+      context.model = model;
+      context.collection = collection;
+      context.Shim = Cato.Shim;
+      context.html = function(i) {
+        // if available, use the prettyprinter
+        if(html) {
+          console.log(html(Cato.Shim.html(instance)));
+        } else {
+          console.log(Cato.Shim.html(instance));
+        }
+      };
+    }
+
   }
 
 }
