@@ -4,6 +4,7 @@ var Cato = require('../lib/index.js'),
     path = require('path'),
     repl = require('repl'),
     html,
+    htmlparser = require('htmlparser'),
     Backbone = require('backbone');
 
 try {
@@ -65,17 +66,49 @@ if(argv['include']) {
 }
 
 if(argv['run']) {
-  var file = path.resolve(process.cwd(), argv['run']);
+  var file = path.resolve(process.cwd(), argv['run']),
+      instance, model, collection;
+
+  if(path.extname(file) == '.html') {
+    var handler = new htmlparser.DefaultHandler(
+        function(error, dom) { if(error) throw error; },
+        { verbose: false, ignoreWhitespace: true }),
+      parser = new htmlparser.Parser(handler),
+      value;
+    parser.parseComplete(fs.readFileSync(file).toString());
+
+    instance = new Cato.View();
+    if(Array.isArray(handler.dom) && handler.dom.length == 1) {
+      value = handler.dom[0];
+    } else {
+      value = Cato.Shim.tag('div', {}, handler.dom);
+    }
+
+    // generate a ._render() function
+    instance._render = function() {
+      if(!value.attribs) {
+        value.attribs = {};
+      }
+      if(!value.attribs.id) {
+        value.attribs.id = Cato.Shim.id();
+      }
+      instance.id = value.attribs.id;
+      return value;
+    };
+  }
 
   if(path.extname(file) == '.js') {
     // if the extension is .js, do this:
     // 1. require the file
     // 2. instantiate the view
     // 3. convert the instance to HTML
-    var instance = new (require(file))(),
-        model, collection;
     // can also set --json to a path to a JSON file
     // or a string of JSON
+    instance = new (require(file))();
+  }
+
+  if(path.extname(file) == '.html' || path.extname(file) == '.js') {
+
     if(argv['json']) {
       var jsonFile = path.resolve(process.cwd(), argv['json']);
       if(fs.existsSync(jsonFile)) {
@@ -126,7 +159,5 @@ if(argv['run']) {
         }
       };
     }
-
   }
-
 }
