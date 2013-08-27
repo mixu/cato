@@ -569,21 +569,17 @@ Outlet.prototype.render = function() {
   }
   // set to rendered
   this._state = states.rendered;
-  this._renderCache = $.tag(this.tagName, this.attributes, this.tagContent);
+  // check _contents for views added later on
+  if(this._contents.length > 0) {
+    this._renderCache = $.tag(this.tagName, this.attributes, [].concat(this.tagContent, this._contents));
+  } else {
+    this._renderCache = $.tag(this.tagName, this.attributes, this.tagContent);
+  }
   this.emit('render');
   return this._renderCache;
 };
 
-Outlet.prototype.ensureElement = function() {
-  if(this._state < states.rendered) {
-    // must be rendered before being bound
-    this.render();
-  }
-};
-
 Outlet.prototype.add = function(view, options) {
-  this.ensureElement();
-
   var index = (options && options.at ? options.at : this._contents.length);
   // render + append the view to the DOM
   if(this._contents.length === 0 || index == this._contents.length) {
@@ -592,7 +588,6 @@ Outlet.prototype.add = function(view, options) {
   } else {
     $(this._contents[index].id).before(view);
   }
-
   // then add view to the contents
   this._contents.splice(index, 0, view);
 };
@@ -607,8 +602,19 @@ Outlet.prototype.remove = function(view, options) {
   }
 };
 
+// called after sorts, re-syncs the order of elements
+Outlet.prototype.reorder = function(views){
+  var self = this;
+  this.reset();
+  views.forEach(function(view) {
+    // detach the view
+    $(view.id).remove();
+    // append at the beginning
+    self.add(view);
+  });
+};
+
 Outlet.prototype.reset = function() {
-  this.length = 0;
   this._contents = [];
   this._state = states.initial;
   // reference to the DOM fragment object for this view
@@ -921,6 +927,16 @@ function CollectionView(tagName, attributes, content) {
   // when a collection is piped, store it as `.collection`
   this.on('pipe', function(collection) {
     self.collection = collection;
+    // reorder the outlet content when the collection changes
+    collection.on('sort', function() {
+      var views = [];
+      collection.each(function(model) {
+        if(self._viewByModel[model.cid]) {
+          views.push(self._viewByModel[model.cid]);
+        }
+      });
+      self.outlet.reorder(views);
+    });
   });
 }
 
