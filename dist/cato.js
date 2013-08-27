@@ -8,7 +8,8 @@ require.m[0] = {
 var $ = require('jQuery'),
     toHTML = require('htmlparser-to-html'),
     ShimUtil = require('../common/shim.util.js'),
-    log = require('minilog')('cato/shim');
+    log = require('minilog')('cato/shim'),
+    safeGet = ShimUtil.safeGet;
 
 // default log level >= warn
 log.suggest.deny('cato/shim', 'info');
@@ -220,7 +221,9 @@ Shim._attach = function(parent, tree, task) {
         if(typeof child == 'function') {
           // check if the item is a function (= content binding on the parent)
           // parse the function - retrieve the count and names of the parameters
-          var paramNames = getParamNames(child);
+          var v = (view || parentView),
+              m = safeGet(v, 'model'),
+              paramNames = getParamNames(child);
           if(!paramNames) {
             // if there are no params, then just run the function once - it never changes
             tag.children[index] = { type: 'text', data: child() };
@@ -232,22 +235,25 @@ Shim._attach = function(parent, tree, task) {
           // if there are params, take each of those and permanently replace it with the fixed value
           tag.children[index] = {
             type: 'text',
-            data: child.apply(view || parentView, paramNames.map(function(key) { return (view || parentView).model.get(key); }))
+            data: child.apply(v, paramNames.map(function(key) { return safeGet(m, key); }))
           };
           // and add a .listenTo(target, event, fn) to the current view || parent view of the tag
-          paramNames.forEach(function(key) {
-            (view || parentView).listenTo((view || parentView).model, 'change:'+key, function(model, value, options) {
+          var m = safeGet(v, 'model');
+          if(v && m) {
+            paramNames.forEach(function(key) {
+              v.listenTo(m, 'change:'+key, function(model, value, options) {
               log.info('Update DOM content id=', tag.attribs.id, 'change:'+key, value);
-              // update the DOM element
-              new Shim(tag.attribs.id).update(
-                child.apply(view || parentView,
-                            paramNames.map(function(key) {
-                              // note: need to use the model from the event
-                              // otherwise we'll always use the model set in the view or the parent view
-                              return model.get(key);
-                            })));
+                // update the DOM element
+                new Shim(tag.attribs.id).update(
+                  child.apply(view || parentView,
+                              paramNames.map(function(key) {
+                                // note: need to use the model from the event
+                                // otherwise we'll always use the model set in the view or the parent view
+                                return safeGet(model, key);
+                              })));
+              });
             });
-          });
+          }
         }
       });
     }
@@ -283,18 +289,22 @@ Shim._attach = function(parent, tree, task) {
           // if there are params, take each of those and permanently replace it with the fixed value
           tag.attribs[key] = fn.apply(view || parentView, paramNames.map(function(key) { return (view || parentView).model.get(key); }));
           // and add a .listenTo(target, event, fn) to the current view || parent view of the tag
-          paramNames.forEach(function(modelKey) {
-            (view || parentView).listenTo((view || parentView).model, 'change:'+modelKey, function(model, value, options) {
-              // set the DOM element attribute
-              var result = fn.apply(view || parentView, paramNames.map(function(modelKey) {
-                // note: need to use the model from the event
-                // otherwise we'll always use the model set in the view or the parent view
-                return model.get(modelKey);
-              }));
-              log.info('set attr value', 'change:'+modelKey, '$("'+tag.attribs.id+'").attr("'+key+'", '+result+');');
-              new Shim(tag.attribs.id).attr(key, result);
+          var v = (view || parentView),
+              m = safeGet(v, 'model');
+          if(v && m) {
+            paramNames.forEach(function(modelKey) {
+              v.listenTo(m, 'change:'+modelKey, function(model, value, options) {
+                // set the DOM element attribute
+                var result = fn.apply(v, paramNames.map(function(modelKey) {
+                  // note: need to use the model from the event
+                  // otherwise we'll always use the model set in the view or the parent view
+                  return safeGet(model, modelKey);
+                }));
+                log.info('set attr value', 'change:'+modelKey, '$("'+tag.attribs.id+'").attr("'+key+'", '+result+');');
+                new Shim(tag.attribs.id).attr(key, result);
+              });
             });
-          });
+          }
         }
       });
     }
@@ -445,6 +455,7 @@ View.prototype.attach = function() {
 // a remaining target are cleaned up
 View.prototype.listenTo = function(target, eventName, callback) {
   var self = this;
+  if(!target.on) return;
   target.on(eventName, callback);
   this.when('unbind', function(model) {
     if(!model || model == target)  {
@@ -508,6 +519,8 @@ View.mixin = function(dest) {
   for (k in this.prototype) {
     this.prototype.hasOwnProperty(k) && (dest.prototype[k] = this.prototype[k]);
   }
+  // include the mixin() method
+  dest.mixin = this.mixin;
 };
 
 module.exports = View;
@@ -794,6 +807,23 @@ exports.dfsTraverse = function(tree, parentTag, parentView, callback) {
   }
   return;
 };
+
+// For now, just `foo.bar` but not `foo.0.bar`
+exports.safeGet = function(obj, path) {
+  if(!obj) return '';
+  var parts = path.split('.'),
+      current = obj;
+  parts.forEach(function(key, i) {
+    var isLast = (i == parts.length);
+    if(!current) return;
+    if(typeof current.get == 'function') {
+      current = current.get(key);
+    } else {
+      current = current[key];
+    }
+  });
+  return (typeof current !== 'undefined' ? current : '');
+}
 },
 "lib/common/collection.js": function(module, exports, require){
 var Backbone = require('backbone');
@@ -865,6 +895,7 @@ module.exports = Collection;
 },
 "lib/common/collection_view.js": function(module, exports, require){
 var $ = (typeof window != 'undefined' ? require('../web/shim.js') : require('../shim.js')),
+    View = require('./view.js'),
     Outlet = require('./outlet.js');
 
 /*
@@ -879,21 +910,25 @@ function CollectionView(tagName, attributes, content) {
   var self = this;
 
   // Two ways to define this:
-  if(this._render) {
-    // 1) object with ._render
-    this.outlet = new Outlet(tagName, attributes, content);
-  } else {
-    // 2) tagName, attributes, content
-    Outlet.call(this, tagName, attributes, content);
-  }
+  // 1) object with ._render
+  // 2) tagName, attributes, content
+  this.outlet = new Outlet(tagName, attributes, content);
   // class to instantiate for child views
   this._childView = null;
   this._renderCache = null;
   // views by model.cid
   this._viewByModel = {};
+  // when a collection is piped, store it as `.collection`
+  this.on('pipe', function(collection) {
+    self.collection = collection;
+  });
 }
 
-Outlet.mixin(CollectionView);
+View.mixin(CollectionView);
+
+CollectionView.prototype.toggle = function(visible) {
+  return this.outlet.toggle(visible);
+};
 
 CollectionView.prototype.render = function() {
   if(this._render) {
@@ -902,22 +937,21 @@ CollectionView.prototype.render = function() {
       this.emit('render');
       this._renderCache = this._render(this.outlet);
     }
-    return this._renderCache;
   } else {
     // passthrough
-    return Outlet.prototype.render.call(this);
+    this._renderCache = this.outlet.render();
   }
+  return this._renderCache;
 };
 
 CollectionView.prototype.bind = function(model, collection, options) {
   // instantiate a new child view, and bind the model to it
-  var view = new this._childView(),
-      outlet = (this.outlet ? this.outlet : this);
+  var view = new this._childView();
   view.bind(model);
 
   this._viewByModel[model.cid] = view;
 
-  outlet.add(view, options);
+  this.outlet.add(view, options);
 };
 
 var oldRemove = CollectionView.prototype.remove;

@@ -1,9 +1,5 @@
-TESTS += test/collection_view.test.js
-TESTS += test/event.test.js
-TESTS += test/model_binding.test.js
-TESTS += test/shim.util.test.js
-TESTS += test/unirender.test.js
-TESTS += test/viewify.test.js
+TESTS += test/common/*.test.js
+TESTS += test/*.test.js
 
 UNAME := $(shell uname)
 
