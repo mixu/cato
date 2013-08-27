@@ -13,10 +13,12 @@ function TestView(name) {
 View.mixin(TestView);
 
 TestView.prototype._render = function() {
-  return $.tag('p', this.name);
+  return $.tag('p', { id: this.id }, this.name);
 };
 
-
+function makeRe(expr) {
+  return new RegExp(expr.replace(/#/g, '[0-9]+').replace(/\//g, '\/'));
+}
 
 exports['outlet'] = {
 
@@ -31,15 +33,20 @@ exports['outlet'] = {
     b.id = $.id();
     c.id = $.id();
 
-    console.log($.html(outlet.render()));
+    assert.ok(makeRe('<ul id="#"></ul>').test($.html(outlet.render())));
 
     outlet.add(c);
-
-    console.log($.html(outlet.render()));
-
     outlet.add(b);
-    console.log($.html(outlet.render()));
+    outlet.add(a);
 
+    console.log($.html(outlet.render()));
+    // console.log(outlet);
+
+    assert.ok(makeRe('<ul id="#"><p id="#">c</p><p id="#">b</p><p id="#">a</p></ul>').test($.html(outlet.render())));
+    outlet.reorder([ a, b, c]);
+    console.log($.html(outlet.render()));
+    assert.ok(makeRe('<ul id="#"><p id="#">a</p><p id="#">b</p><p id="#">c</p></ul>').test($.html(outlet.render())));
+    // console.log(outlet);
   }
 
 };

@@ -150,12 +150,10 @@ exports['given a collection'] = {
     console.log(collection.pluck('name'));
 
     val = $.html(tableView),
-    re = makeRe('<ul id="#"><li id="#">a</li><li id="#">m</li><li id="#">z</li></ul>');
+    re = makeRe('<ul id="#"><li id="#">a</li><li id="#">b</li><li id="#">m</li><li id="#">z</li></ul>');
     console.log(val);
     assert.deepEqual(collection.pluck('name'), [ 'a', 'b', 'm', 'z']);
     assert.ok(re.test(val));
-
-
   }
 
 };

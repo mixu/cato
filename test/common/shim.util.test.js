@@ -1,9 +1,9 @@
 var util = require('util'),
     assert = require('assert'),
-    $ = require('../lib/shim.js'),
-    ShimUtil = require('../lib/common/shim.util.js'),
+    $ = require('../../lib/shim.js'),
+    ShimUtil = require('../../lib/common/shim.util.js'),
     toHTML = require('htmlparser-to-html'),
-    PlaceholderView = require('./lib/placeholder.js'),
+    PlaceholderView = require('../lib/placeholder.js'),
     Outlet = require('cato').Outlet;
 
 var pretty = require('html').prettyPrint;
@@ -209,8 +209,8 @@ module.exports['shim util tests'] = {
     // console.log('parViews:', parentViewPath);
 
     // since changes in the id's are not really important, fuzzy match
-    assert.ok(tagPath       .match(/a,b,.,C,d,.,E,f/));
-    assert.ok(viewPath      .match(/_,_,.,C,_,.,E,_/));
+    assert.ok(tagPath       .match(/a,b,.+,C,d,.+,E,f/));
+    assert.ok(viewPath      .match(/_,_,.+,C,_,.+,E,_/));
     assert.ok(parentPath    .match(/!,a,!,!,C,C,C,E/));
     assert.ok(parentViewPath.match(/!,!,!,!,C,C,C,E/));
 

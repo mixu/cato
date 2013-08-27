@@ -1,6 +1,5 @@
 var util = require('util'),
-    assert = require('assert'),
-    diff = require('difflet')({ indent : 2 });
+    assert = require('assert');
 
 var Parser = require('jade').Parser,
     $ = require('cato').Shim,
