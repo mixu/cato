@@ -43,6 +43,11 @@ Shim.id = function(count) {
 // fetch a element from the DOM
 Shim.get = Shim.prototype.get = function(token) {
   if(typeof token !== 'string') {
+    // ensure that even if the token is undefined the return value is something you can call
+    // jquery functions on
+    if(!token || !token.jquery) {
+      return $();
+    }
     return token;
   }
   return $('#'+token);
@@ -612,6 +617,7 @@ Outlet.prototype.reorder = function(views){
     // append at the beginning
     self.add(view);
   });
+  this.emit('sort');
 };
 
 Outlet.prototype.reset = function() {
